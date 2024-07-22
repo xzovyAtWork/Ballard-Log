@@ -103,7 +103,7 @@ let sf5 = new Device(37, 'sf5');
 let sf6 = new Device(38, 'sf6');
 // let vfdHOA = new Device(40, 'VFD HOA');
 let vfdFault = new Device(39, 'VFD Fault');
-let sumpStatus = new Device( 11,'Pump Status');
+let sumpStatus = new Device( 12,'Pump Status');
 
 
 // let sensorList = [maTemp, saTemp, rh1, rh2, conductivity]
