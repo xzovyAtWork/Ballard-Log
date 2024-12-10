@@ -7,7 +7,7 @@ const bleed = "prim_2120";
 const drain = "prim_2091";
 const fill = "prim_2061";
 
-const fanspeed = "prim_1709";
+const sfSpeed = "prim_1709";
 const bypass = "prim_2019";
 const face = "prim_1975";
 
