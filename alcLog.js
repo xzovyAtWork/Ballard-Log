@@ -1,7 +1,3 @@
-//add monitorWOL function 4/20
-//add auto download and clear interval if they are set 4/6
-//this has updated checkPrevious() method 3/14
-
 let realmCount = main.getActionWindow().primitiveRequestRealm.realmCount;
 let wbs = main.getActionWindow().primitiveRequestRealm.wbsId;
 
