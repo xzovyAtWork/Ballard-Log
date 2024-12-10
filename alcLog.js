@@ -85,8 +85,6 @@ class Device{
     }
         })
     return validity
-       //return //this.retrievedValues.includes(parseFloat(this.feedback.textContent))
-       // return (Math.round(this.retrievedValues[this.retrievedValues.length - 1]) == Math.round(parseFloat(this.feedback.textContent)) || Math.ceil(this.retrievedValues[this.retrievedValues.length - 1]) == Math.ceil((parseFloat(this.feedback.textContent))))
     }
     
 
@@ -97,7 +95,7 @@ class Device{
             target = parseInt(target);
             return num <= (target + range) && num >= (target - range) 
         }
-        if(between(this.feedback.textContent, this.command.textContent) && !this.checkPrevious()){ //!this.checkPrevious() !between(this.feedback.textContent, this.retrievedValues[this.retrievedValues.length - 1]
+        if(between(this.feedback.textContent, this.command.textContent) && !this.checkPrevious()){
             setTimeout(()=>{
                 this.retrievedValues.push(parseFloat(this.feedback.textContent))
                 this.pollCounter++
@@ -142,7 +140,6 @@ function createDevices(quantity = 1, childElement, arr, nameList){
 function populateFanStatusNames(){
     for(let i = 0; i < numberOfFans; i++){
         fanNames[i] = `SF${i + 1} status`;
-        // console.log(fanNames[i])
     }
 };
 populateFanStatusNames();
