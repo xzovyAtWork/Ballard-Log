@@ -294,3 +294,26 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
+
+
+
+function testBinaryDevice(device){
+    return new Promise(function(resolve, reject){
+        device.toggle();
+        setTimeout(()=>{ 
+            console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+            let loggedStatus = device.feedback.textContent
+            let timer = setInterval(()=>{
+                if(loggedStatus != device.feedback.textContent){
+                    clearInterval(timer);
+                    resolve();
+                    console.log('cleared')
+                }
+            }, 1000);
+        }, 3000);   
+    })
+}
+
+let testFill = () =>  {testBinaryDevice(fillValve)
+    .then(() => {testBinaryDevice(fillValve).then(() => {console.log("Fill Valve Test Complete")})}) 
+}
