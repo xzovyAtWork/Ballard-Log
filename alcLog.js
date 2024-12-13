@@ -115,6 +115,9 @@ class Device{
                 this.retrievedValues.push(parseFloat(this.feedback.textContent))
                 console.log(this.name,this.retrievedValues);
                 lastPushed = this;
+                if(this.name == 'VFD'){
+                    console.log("airflow:",airflow.feedback.textContent)
+                }
             }, 4000)
         }
     }
@@ -180,6 +183,7 @@ let vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
 let vfdFault = new Device(41, 'VFD Fault');
 let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
 let bleed = new Device(56, 'bleed',56 , "prim_2120");
+let airflow = new Device(15, "airflow", undefined, "prim_722")
 
 
 let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
@@ -248,7 +252,7 @@ startAnalogPoll = setTimeout(function analogFbks(){
 }, 6000);
 
 function showSensors(){
-    sensorList.forEach(e => {e.getStatus(); console.log(e.name, e.status)});
+    sensorList.forEach(e => {e.getStatus(); console.log(e.name,':' ,e.status)});
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
@@ -295,8 +299,6 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
 
-
-
 function testBinaryDevice(device){
     return new Promise(function(resolve, reject){
         device.toggle();
@@ -315,5 +317,9 @@ function testBinaryDevice(device){
 }
 
 let testFill = () =>  {testBinaryDevice(fillValve)
-    .then(() => {testBinaryDevice(fillValve).then(() => {console.log("Fill Valve Test Complete")})}) 
+    .then(() => {
+        testBinaryDevice(fillValve).then(() => {
+            console.log("Fill Valve Test Complete")
+        })
+    }) 
 }
