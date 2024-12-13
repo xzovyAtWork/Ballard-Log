@@ -182,7 +182,7 @@ let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
 let bleed = new Device(56, 'bleed',56 , "prim_2120");
 
 
-let sensorList = [maTemp, saTemp, rh1, rh2, conductivity]
+let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 let binaryDeviceList = [floatObjList, fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 
