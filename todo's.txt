@@ -1,0 +1,20 @@
+Common commands bundles: 
+
+    bleed and sump on 
+        setTimeout -> bleed off (confirm)
+
+    face, bypass  command/feedback
+
+    collect sensor data (rh1 & 2, ma & sa temp, face bypass)
+
+functions:
+
+    ramp fans
+
+    run fans,
+    
+    run bypass
+
+tests:
+
+    maTemp -> 
