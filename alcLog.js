@@ -102,7 +102,9 @@ class Device{
                     console.log("airflow:",airflow.feedback.textContent)
                 }
             }, 4000)
+            return true;
         }
+        
     }
 
 
@@ -190,6 +192,7 @@ let analogDeviceList = [bypassDamper, faceDamper, vfd];
         e.getStatus();
     })
 })()
+
 let startDownload = confirm('start download?')
 if(startDownload === true){
     invokeManualCommand('download');
@@ -198,6 +201,12 @@ if(startDownload === true){
 let startBinaryPoll, startAnalogPoll;
 clearInterval(startBinaryPoll);
 clearTimeout(startAnalogPoll);
+
+function between(num, target, range = 2){
+    num = parseInt(num);
+    target = parseInt(target);
+    return num <= (target + range) && num >= (target - range) 
+}
 
 function pollSensors(){
     sensorList.forEach(e => e.checkFault())
@@ -259,8 +268,6 @@ function flushTank(){
     },1000)
 }
 
-
-
 function watchWOL(cb){
     if(floatObjList[0].feedback.textContent == 'Low'){
         setTimeout(()=>{
@@ -311,6 +318,31 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
 
+function setupAnalogDevice(device, withOutput = false, commandValue){
+    return new Promise(function(resolve, reject){
+        let loggedStatus = device.feedback.textContent;
+        console.log(loggedStatus)
+        if(withOutput){
+            console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+        } else{
+            console.log(device.name,' status:', device.feedback.textContent); 
+        }
+        setTimeout(()=>{
+            // if(device.retrievedValues.find(e => between(e, parseInt(device.command.textContent) != undefined))){
+                // console.log(device.retrievedValues.includes(parseInt(loggedStatus)))
+                device.postReq(commandValue);
+        
+                let timer = setInterval(()=>{
+                    if(between(device.feedback.textContent, device.command.textContent,1.5) && !device.checkPrevious()){
+                        clearInterval(timer);
+                        resolve('cleared');
+                        console.log('cleared')
+                    }
+                },1000);
+        },3000)
+    })
+}
+
 function setupBinaryDevice(device, withOutput = false){
     return new Promise(function(resolve, reject){
         if(withOutput){
@@ -326,8 +358,8 @@ function setupBinaryDevice(device, withOutput = false){
             let timer = setInterval(()=>{
                 if(loggedStatus != device.feedback.textContent){
                     clearInterval(timer);
-                    resolve();
-                    console.log('cleared')
+                    resolve('cleared');
+                    // console.log('cleared')
                 }
             },
             withOutput ? 1000 : 250)
@@ -340,17 +372,6 @@ function testBinaryDevice(device, withOutput){
         setupBinaryDevice(device, withOutput).then(()=>{
             setupBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
         })
-    })
-}
-
-function testAnalogDevice(device, withOutput = false){
-    return new Promise(function(resolve, reject){
-        let loggedStatus = device.feedback.textContent
-            if(withOutput){
-                console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
-            } else{
-                console.log(device.name,' status:', device.feedback.textContent); 
-            }
     })
 }
 
@@ -370,4 +391,3 @@ function testFloats(){
         console.log(`Floats Test Complete`);                
     })
 }
-
