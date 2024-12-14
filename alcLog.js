@@ -13,23 +13,6 @@ const headerObj = {
     "sec-fetch-site": "same-origin"
 }
 const refUrl = `http://localhost:8080/~dbid/1651?a=properties&c=default&i=equipment&f=io_points&wbs=${wbs}&pageCount=1&lcount=0`;
-
-//template function i.e. postReq(fans, 0); 0 is off, 1 is on
-// function postReq(device, command = 0){
-//     const body = `<MESSAGES channelId=\"publisher\" realmId=\"primitiveRequestRealm\"><MESSAGE messageTypeId=\"reqPrimitiveSubMessage\" consumerId=\"PrimitiveRegistrant\" messageId=\"primitiveMessageSubmit\" priority=\"1\" realmCount="${realmCount}" seqnum=\"13\"><BODY><PRIMITIVE_SUBMIT getFieldValues=\"true\" updateDeferredValues=\"true\" updateActionSet=\"true\" auditlog=\"Edit checkout for i/o points\" auditenabled=\"true\" auditdetails=\"\" cjDoCommit=\"true\" cjGetChangesFromCore=\"true\"><PRIMITIVE id="${device}"><![CDATA[${command}]]></PRIMITIVE></PRIMITIVE_SUBMIT></BODY></MESSAGE></MESSAGES>`;
-//     return function(){
-//         return fetch(`http://localhost:8080/_common/servlet/lvl5/msgservlet?wbs=${wbs}`, {
-//             "headers": headerObj,
-//             "referrer": refUrl,
-//             "referrerPolicy": "strict-origin-when-cross-origin",
-//             "body": body,
-//             "method": "POST",
-//             "mode": "cors",
-//             "credentials": "include"
-//         });
-//     }
-// };
-
 const aContent = document.querySelector('.actionFrame').contentWindow.document.childNodes[1];
 let lastPushed;
 
@@ -257,6 +240,35 @@ function showSensors(){
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
 
+
+function flushTank(){
+    sump.postReq(1);
+    bleed.postReq(1);
+    drainValve.postReq(0);
+    fillValve.postReq(0);
+
+    let watchdog = setInterval(()=>{
+        if(floatObjList[0].feedback.textContent == 'Low'){
+            clearInterval(watchdog);
+            setTimeout(()=>{
+                console.log('Tank Flushed');
+                bleed.toggle();
+                drainValve.toggle();
+                fillValve.toggle();
+            }, 60000)}
+    },1000)
+}
+
+
+
+function watchWOL(cb){
+    if(floatObjList[0].feedback.textContent == 'Low'){
+        setTimeout(()=>{
+            console.log('Tank Flushed');
+            cb();
+        }, 60000)}
+}
+
 function runBypass(){
     console.log("timer started at:", new Date().toLocaleString())
    return setTimeout(()=>{
@@ -299,27 +311,63 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
 
-function testBinaryDevice(device){
+function setupBinaryDevice(device, withOutput = false){
     return new Promise(function(resolve, reject){
-        device.toggle();
+        if(withOutput){
+            device.toggle();
+        }
         setTimeout(()=>{ 
-            console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
             let loggedStatus = device.feedback.textContent
+            if(withOutput){
+                console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+            } else{
+                console.log(device.name,' status:', device.feedback.textContent); 
+            }
             let timer = setInterval(()=>{
                 if(loggedStatus != device.feedback.textContent){
                     clearInterval(timer);
                     resolve();
                     console.log('cleared')
                 }
-            }, 1000);
-        }, 3000);   
+            },
+            withOutput ? 1000 : 250)
+        }, withOutput ? 3500 : 0);   
     })
 }
 
-let testFill = () =>  {testBinaryDevice(fillValve)
-    .then(() => {
-        testBinaryDevice(fillValve).then(() => {
-            console.log("Fill Valve Test Complete")
+function testBinaryDevice(device, withOutput){
+    return new Promise((resolve, reject) => {
+        setupBinaryDevice(device, withOutput).then(()=>{
+            setupBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
         })
-    }) 
+    })
 }
+
+function testAnalogDevice(device, withOutput = false){
+    return new Promise(function(resolve, reject){
+        let loggedStatus = device.feedback.textContent
+            if(withOutput){
+                console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+            } else{
+                console.log(device.name,' status:', device.feedback.textContent); 
+            }
+    })
+}
+
+function testEvapActuators(){
+    testBinaryDevice(fillValve, true).then(()=>{
+        testBinaryDevice(drainValve, true).then(()=>{
+            console.log('Evap actuators test complete')
+        })
+    })
+}
+
+function testFloats(){
+    let whl = testBinaryDevice(floatObjList[1])
+    let wol = testBinaryDevice(floatObjList[0])
+    let wll = testBinaryDevice(floatObjList[2])
+    Promise.all([whl,wol,wll]).then(()=>{
+        console.log(`Floats Test Complete`);                
+    })
+}
+
