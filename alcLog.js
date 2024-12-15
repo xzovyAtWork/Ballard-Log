@@ -256,7 +256,7 @@ function showSensors(){
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
-function flushTank(){
+function flushTank(andMedia){
     sump.postReq(1);
     bleed.postReq(1);
     drainValve.postReq(0);
@@ -265,12 +265,25 @@ function flushTank(){
     let watchdog = setInterval(()=>{
         if(floatObjList[0].feedback.textContent == 'Low'){
             clearInterval(watchdog);
+            if(andMedia){
+                sump.postReq(0);
+                bleed.postReq(0);
+                console.log('flushing for 10 minutes', new Date().toLocaleTimeString())
+            }
             setTimeout(()=>{
                 console.log('Tank Flushed');
-                bleed.toggle();
                 drainValve.toggle();
                 fillValve.toggle();
-            }, 30000)}
+                if(andMedia){
+                    setTimeout(()=>{
+                        bleed.postReq(1);
+                        sump.postReq(1);
+                    },5 * 60000)
+                }else{
+                    bleed.postReq(1);
+                    sump.postReq(1);
+                }
+            }, andMedia ? 5 * 60000 : 30000)}
     },1000)
 }
 
