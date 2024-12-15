@@ -68,8 +68,8 @@ class Device{
             console.log(`${this.name} is ${this.status}`)
         }
     }
-    getAnalog(){
-        if(between(this.feedback.textContent, this.command.textContent, 2) && !this.checkPrevious()){
+    getAnalog(delay = 4000, range){
+        if(between(this.feedback.textContent, this.command.textContent, range) && !this.checkPrevious()){
             this.valueChanged = true;
             setTimeout(()=>{
                 this.retrievedValues.push(parseFloat(this.feedback.textContent))
@@ -78,7 +78,7 @@ class Device{
                 if(this.name == 'VFD'){
                     console.log("airflow:",airflow.feedback.textContent)
                 }
-            }, 4000)
+            }, delay)
             return true;
         }
         
@@ -115,7 +115,7 @@ let leak1 = new Device(25, 'MPDC Leak');
 let leak2 = new Device(26, 'Mech. Gallery Leak Detector');
 let conductivity = new Device(10, 'Conductivity');
 let maTemp = new Device(11, 'M/A');
-let saTemp = new Device(1, 'S/A') 
+let saTemp = new Device(1, 'S/A');
 let rh1 = new Device(12, 'RH One');
 let rh2 = new Device(13, 'RH Two');
 let primary = new Device(42, 'UPS Primary Status')
@@ -164,7 +164,7 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
 
-console.log('Polling Inputs...')
+console.log('Polling Inputs...');
 
 /* functions */
 (function fetchStatusOnLoad(){
@@ -223,8 +223,8 @@ function pollBinary(){
 }
 
 function pollAnalog(){
-    bypassDamper.getAnalog()
-    faceDamper.getAnalog()
+    // bypassDamper.getAnalog()
+    // faceDamper.getAnalog()
     vfd.getAnalog()
 }
 
@@ -266,29 +266,38 @@ function setGPM(){
     sump.postReq(1);
    return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
 }
-function setupAnalogDevice(device, withOutput = false, commandValue){
-    return new Promise(function(resolve, reject){
-        let loggedStatus = device.feedback.textContent;
-        console.log(loggedStatus)
-        if(withOutput){
-            console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
-            device.postReq(commandValue);
-        } else{
-            console.log(device.name,' status:', device.feedback.textContent); 
-        }
-        setTimeout(()=>{
-                let timer = setInterval(()=>{
-                    if(between(device.feedback.textContent, device.command.textContent,1.5) && !device.checkPrevious()){
-                        clearInterval(timer);
-                        resolve('cleared');
-                        console.log('cleared')
-                    }
-                },1000);
-        },3000)
-    })
-}
+function strokeAnalogDevice(device, withOutput = false, commandValue){
+        return new Promise(function(resolve, reject){
 
-function setupBinaryDevice(device, withOutput = false){
+            let loggedStatus = parseInt(device.feedback.textContent);
+            console.log(loggedStatus)
+            if(withOutput){
+                console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback.textContent);
+                device.postReq(commandValue);
+            } else{
+                console.log(device.name,' status:', device.feedback.textContent); 
+            }
+            setTimeout(()=>{
+                    let timer = setInterval(()=>{
+                        if(withOutput && (between(device.feedback.textContent, device.command.textContent,2) && !device.checkPrevious())){
+                            clearInterval(timer);
+                            setTimeout(()=>{
+                                console.log(device.checkPrevious())
+                                device.getAnalog(0, 5);
+                                resolve('cleared');
+                                console.log(`${device.name} cleared`)
+                            },2500)
+                        }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
+                            clearInterval(timer);
+                            resolve('cleared');
+                            console.log(`${device.name} cleared`, device.feedback.textContent)
+                        }
+                    },withOutput ? 4000 : 250)
+                }, withOutput ? 3500 : 1000); 
+        })
+    }
+
+function strokeBinaryDevice(device, withOutput = false){
     return new Promise(function(resolve, reject){
         if(withOutput){
             device.toggle();
@@ -304,27 +313,45 @@ function setupBinaryDevice(device, withOutput = false){
                 if(loggedStatus != device.feedback.textContent){
                     clearInterval(timer);
                     resolve('cleared');
-                    // console.log('cleared')
+                    console.log('cleared')
                 }
-            },
-            withOutput ? 1000 : 250)
+            },withOutput ? 3000 : 250)
         }, withOutput ? 3500 : 0);   
     })
 }
 
 function testBinaryDevice(device, withOutput){
     return new Promise((resolve, reject) => {
-        setupBinaryDevice(device, withOutput).then(()=>{
-            setupBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
+        strokeBinaryDevice(device, withOutput).then(()=>{
+            strokeBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
         })
     })
 }
 
-function testEvapActuators(){
+function testFillAndDrain(){
     testBinaryDevice(fillValve, true).then(()=>{
         testBinaryDevice(drainValve, true).then(()=>{
-            console.log('Evap actuators test complete')
+            console.log('Fill and Drain actuators test complete')
         })
+    })
+}
+
+function testDamper(device, commandValues){
+    return new Promise((resolve, reject) =>{
+        let tested = resolve;
+        device.getAnalog(0, 5); 
+        strokeAnalogDevice(device, true, commandValues[0]).then(()=>{
+            strokeAnalogDevice(device, true, commandValues[1]).then(()=>{
+                tested();
+                console.log(`${device.name} tested.`);
+                device.postReq(commandValues[2]);
+            })
+        }).catch(reject)
+        })
+}
+function testFaceAndBypass(){
+    testDamper(bypassDamper, [50, 20, 100]).then(()=>{
+        testDamper(faceDamper, [50, 100, 20])
     })
 }
 
@@ -334,5 +361,16 @@ function testFloats(){
     let wll = testBinaryDevice(floatObjList[2])
     Promise.all([whl,wol,wll]).then(()=>{
         console.log(`Floats Test Complete`);                
+    })
+}
+
+function testUnitDevices(){
+    let mixedAirTemp = strokeAnalogDevice(maTemp);
+    let supplyAirTemp = strokeAnalogDevice(saTemp);
+    let humidityOne = strokeAnalogDevice(rh1);
+    let himidityTwo = strokeAnalogDevice(rh2);
+
+    Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo]).then(()=>{
+        console.log('analog inputs test complete')
     })
 }
