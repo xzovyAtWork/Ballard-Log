@@ -131,8 +131,7 @@ let binaryDeviceList = [fanObjList, fillValve, drainValve, leak1, leak2, primary
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 
 let controllerReady;
-let startDownload = confirm('start download?');
-if(startDownload === true){
+if(saTemp.feedback.textContent == '?'){
     invokeManualCommand('download');
     controllerReady = setInterval(()=>{
         if(saTemp.feedback.textContent !== '?'){
@@ -144,13 +143,16 @@ if(startDownload === true){
             bypassDamper.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
+            clearInterval(startBinaryPoll);
+            clearTimeout(startAnalogPoll);
         }
     },1000)
+}else{
+    clearInterval(startBinaryPoll);
+    clearTimeout(startAnalogPoll); 
 }
 
 let startBinaryPoll, startAnalogPoll;
-clearInterval(startBinaryPoll);
-clearTimeout(startAnalogPoll);
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
@@ -161,20 +163,41 @@ startAnalogPoll = setTimeout(function analogFbks(){
     startAnalogPoll = setTimeout(analogFbks, 6000);
 }, 6000);
 
+aContent.querySelector("#scrollContent > div > span").style.display = 'none'
+
 let acceptButtonLow = document.createElement('button');
     acceptButtonLow.textContent = 'Accept';
     acceptButtonLow.style.margin = '0 1.5em';
+    acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
 
-let updatePreviousArrayButton = document.createElement('button');
-    updatePreviousArrayButton.textContent = 'Update Previous Value';
+let testDampersButton = document.createElement('button');
+    testDampersButton.textContent = 'Test Dampers';
+    testDampersButton.style.margin = '0 1.5em';
+    testDampersButton.addEventListener('click', ()=>{testFaceAndBypass();});
 
-updatePreviousArrayButton.addEventListener('click',()=>{
-    updatePreviousValue();
-})
-acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
+let testFillDrainButton = document.createElement('button');
+    testFillDrainButton.textContent = 'Test Fill/Drain';
+    testFillDrainButton.style.margin = '0 1.5em';
+    testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain()});
+
+let flushTankButton = document.createElement('button');
+    flushTankButton.textContent = 'Flush Tank';
+    flushTankButton.style.margin = '0 1.5em';
+    flushTankButton.addEventListener('click',()=>{flushTank()});
+
+let testUnitDevicesButton = document.createElement('button');
+    testUnitDevicesButton.textContent = 'Test Others';
+    testUnitDevicesButton.style.margin = '0 1.5em';
+    testUnitDevicesButton.addEventListener('click', ()=>{testUnitDevices()});
+
+
+
 if(aContent.querySelector('#scrollContent > div').children.length < 2){
+    aContent.querySelector("#scrollContent > div").append(testDampersButton);
+    aContent.querySelector("#scrollContent > div").append(testFillDrainButton);
+    aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
     aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
-    aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
+    aContent.querySelector("#scrollContent > div").append(flushTankButton);
 }
 
 /* functions */
@@ -213,16 +236,9 @@ function between(num, target, range = 2){
     target = parseInt(target);
     return num <= (target + range) && num >= (target - range) 
 }
-
 function pollSensors(){
     sensorList.forEach(e => e.checkFault())
 }
-
-function updatePreviousValue(){
-    lastPushed.retrievedValues.pop();
-    console.log(lastPushed.name,lastPushed.retrievedValues)
-}
-
 function pollBinary(){
     binaryDeviceList.slice(2).forEach(e => e.getBinary())
     floatObjList.forEach((e) => {
@@ -232,19 +248,14 @@ function pollBinary(){
         e.getBinary();
     })
 }
-
 function pollAnalog(){
-    // bypassDamper.getAnalog()
-    // faceDamper.getAnalog()
     vfd.getAnalog()
 }
-
 function showSensors(){
     sensorList.forEach(e => {e.getStatus(); console.log(e.name,':' ,e.status)});
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
-
 function flushTank(){
     sump.postReq(1);
     bleed.postReq(1);
@@ -259,7 +270,7 @@ function flushTank(){
                 bleed.toggle();
                 drainValve.toggle();
                 fillValve.toggle();
-            }, 60000)}
+            }, 30000)}
     },1000)
 }
 
@@ -271,7 +282,6 @@ function runBypass(){
         console.log("bypass test finished")
     }, 30 * 60000)
 }
-
 function setGPM(){
     bleed.postReq(1);
     sump.postReq(1);
@@ -300,13 +310,13 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
                             },2500)
                         }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
                             clearInterval(timer);
-                            console.log(`${device.name} cleared`, device.feedback.textContent)
+                            console.log(`${device.name} cleared`, device.feedback.textContent);
+                            resolve();
                         }
                     },withOutput ? 4000 : 250)
                 }, withOutput ? 3500 : 1000); 
         })
     }
-    
     function strokeBinaryDevice(device, withOutput = false){
         return new Promise(function(resolve, reject){
         if(withOutput){
@@ -328,7 +338,6 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
         }, withOutput ? 3500 : 0);   
     })
 }
-
 function testBinaryDevice(device, withOutput){
     return new Promise((resolve, reject) => {
         strokeBinaryDevice(device, withOutput).then(()=>{
@@ -336,8 +345,6 @@ function testBinaryDevice(device, withOutput){
         })
     })
 }
-
-
 function testDamper(device, commandValues){
     return new Promise((resolve, reject) =>{
         let tested = resolve;
@@ -363,25 +370,29 @@ function testFaceAndBypass(){
         testDamper(faceDamper, [50, 100, 20])
     })
 }
-
 function testFloats(){
-    let whl = testBinaryDevice(floatObjList[1])
-    let wol = testBinaryDevice(floatObjList[0])
-    let wll = testBinaryDevice(floatObjList[2])
-    Promise.all([whl,wol,wll]).then(()=>{
-        console.log(`Floats Test Complete`);                
+    return new Promise((resolve)=>{
+        let resolved = resolve
+        let whl = testBinaryDevice(floatObjList[1])
+        let wol = testBinaryDevice(floatObjList[0])
+        let wll = testBinaryDevice(floatObjList[2])
+        Promise.all([whl,wol,wll]).then(()=>{
+            console.log(`Floats Test Complete`);
+            resolved();                
+        })
     })
-}
-
+    }
 function testUnitDevices(){
+    clearInterval(startBinaryPoll);
     let mixedAirTemp = strokeAnalogDevice(maTemp);
     let supplyAirTemp = strokeAnalogDevice(saTemp);
     let humidityOne = strokeAnalogDevice(rh1);
     let himidityTwo = strokeAnalogDevice(rh2);
+    let testAllFloats = testFloats()
 
-    Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo]).then(()=>{
-        console.log('analog inputs test complete')
+    Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]).then(()=>{
+        console.log('Unit inputs test complete')
         showSensors();
+        startBinaryPoll();
     })
 }
-
