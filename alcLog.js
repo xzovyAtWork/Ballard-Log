@@ -186,7 +186,7 @@ let flushTankButton = document.createElement('button');
     flushTankButton.addEventListener('click',()=>{flushTank()});
 
 let testUnitDevicesButton = document.createElement('button');
-    testUnitDevicesButton.textContent = 'Test Others';
+    testUnitDevicesButton.textContent = 'Test Inputs';
     testUnitDevicesButton.style.margin = '0 1.5em';
     testUnitDevicesButton.addEventListener('click', ()=>{testUnitDevices()});
 
