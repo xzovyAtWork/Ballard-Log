@@ -136,6 +136,7 @@ if(startDownload === true){
     invokeManualCommand('download');
     controllerReady = setInterval(()=>{
         if(saTemp.feedback.textContent !== '?'){
+            console.log('Polling Inputs...');
             clearInterval(controllerReady);
             fillValve.postReq(0);
             drainValve.postReq(1);
@@ -175,8 +176,6 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
     aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
 }
-
-console.log('Polling Inputs...');
 
 /* functions */
 (function fetchStatusOnLoad(){
