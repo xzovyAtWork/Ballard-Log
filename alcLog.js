@@ -37,7 +37,7 @@ class Device{
     toggle(){
         if(this.command.textContent == 'Close' || this.command.textContent == 'Off'|| this.command.textContent == 'Disable'){
             this.postReq(1)
-        }else if(this.command.textContent == "Open"|| this.command.textContent == 'On'|| this.command.textContent == 'Enable'){
+        }else {
             this.postReq(0)
         }
     }
