@@ -21,9 +21,6 @@ class Device{
         this.name = name;
         this.status = '';
         this.id = id;
-        this.type = undefined
-        this.checkedOut = false;
-        this.active = false;
         if(!undefined){
             if(statusChildNode > 20 ){
                 this.feedback = aContent.querySelector(`#bodyTable > tbody > tr:nth-child(${statusChildNode}) > td:nth-child(3)`).childNodes[0];
@@ -45,11 +42,7 @@ class Device{
     }
 
     postReq(command = 0){
-        if(command == 0){
-            this.active = false
-        }
         const body = `<MESSAGES channelId=\"publisher\" realmId=\"primitiveRequestRealm\"><MESSAGE messageTypeId=\"reqPrimitiveSubMessage\" consumerId=\"PrimitiveRegistrant\" messageId=\"primitiveMessageSubmit\" priority=\"1\" realmCount="${realmCount}" seqnum=\"13\"><BODY><PRIMITIVE_SUBMIT getFieldValues=\"true\" updateDeferredValues=\"true\" updateActionSet=\"true\" auditlog=\"Edit checkout for i/o points\" auditenabled=\"true\" auditdetails=\"\" cjDoCommit=\"true\" cjGetChangesFromCore=\"true\"><PRIMITIVE id="${this.id}"><![CDATA[${command}]]></PRIMITIVE></PRIMITIVE_SUBMIT></BODY></MESSAGE></MESSAGES>`;
-        // return function(){
             return fetch(`http://localhost:8080/_common/servlet/lvl5/msgservlet?wbs=${wbs}`, {
                 "headers": headerObj,
                 "referrer": refUrl,
@@ -59,18 +52,12 @@ class Device{
                 "mode": "cors",
                 "credentials": "include"
             });
-        // }
     };
 
     checkPrevious(){
-        function between(num, target, range = 1.5){
-            num = parseInt(num);
-            target = parseInt(target);
-            return num <= (target + range) && num >= (target - range) 
-        }
         let validity = false;
         this.retrievedValues.forEach((e) => {
-            if(between(this.feedback.textContent, e)){
+            if(between(this.feedback.textContent, e, 1.5)){
                 validity = true;
              }
         })
@@ -78,7 +65,6 @@ class Device{
     }
     
     getBinary(){
-        this.type = 'binary';
         if(this.status !== this.feedback.textContent){
             this.status = this.feedback.textContent
             console.log(`${this.name} is ${this.status}`)
@@ -86,13 +72,7 @@ class Device{
     }
 
     getAnalog(){
-        this.type = 'analog';
-        function between(num, target, range = 2){
-            num = parseInt(num);
-            target = parseInt(target);
-            return num <= (target + range) && num >= (target - range) 
-        }
-        if(between(this.feedback.textContent, this.command.textContent) && !this.checkPrevious()){
+        if(between(this.feedback.textContent, this.command.textContent, 2) && !this.checkPrevious()){
             this.valueChanged = true;
             setTimeout(()=>{
                 this.retrievedValues.push(parseFloat(this.feedback.textContent))
@@ -170,7 +150,6 @@ let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
 let bleed = new Device(56, 'bleed',56 , "prim_2120");
 let airflow = new Device(15, "airflow", undefined, "prim_722")
 
-
 let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 let binaryDeviceList = [floatObjList, fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
@@ -211,7 +190,6 @@ function between(num, target, range = 2){
 function pollSensors(){
     sensorList.forEach(e => e.checkFault())
 }
-
 
 function updatePreviousValue(){
     lastPushed.retrievedValues.pop();
@@ -268,14 +246,6 @@ function flushTank(){
     },1000)
 }
 
-function watchWOL(cb){
-    if(floatObjList[0].feedback.textContent == 'Low'){
-        setTimeout(()=>{
-            console.log('Tank Flushed');
-            cb();
-        }, 60000)}
-}
-
 function runBypass(){
     console.log("timer started at:", new Date().toLocaleString())
    return setTimeout(()=>{
@@ -324,14 +294,11 @@ function setupAnalogDevice(device, withOutput = false, commandValue){
         console.log(loggedStatus)
         if(withOutput){
             console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+            device.postReq(commandValue);
         } else{
             console.log(device.name,' status:', device.feedback.textContent); 
         }
         setTimeout(()=>{
-            // if(device.retrievedValues.find(e => between(e, parseInt(device.command.textContent) != undefined))){
-                // console.log(device.retrievedValues.includes(parseInt(loggedStatus)))
-                device.postReq(commandValue);
-        
                 let timer = setInterval(()=>{
                     if(between(device.feedback.textContent, device.command.textContent,1.5) && !device.checkPrevious()){
                         clearInterval(timer);
