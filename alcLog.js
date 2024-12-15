@@ -32,7 +32,8 @@ class Device{
             }
         }
     }
-
+    retrievedValues = [];
+    faulted = false;
     toggle(){
         if(this.command.textContent == 'Close' || this.command.textContent == 'Off'|| this.command.textContent == 'Disable'){
             this.postReq(1)
@@ -40,7 +41,6 @@ class Device{
             this.postReq(0)
         }
     }
-
     postReq(command = 0){
         const body = `<MESSAGES channelId=\"publisher\" realmId=\"primitiveRequestRealm\"><MESSAGE messageTypeId=\"reqPrimitiveSubMessage\" consumerId=\"PrimitiveRegistrant\" messageId=\"primitiveMessageSubmit\" priority=\"1\" realmCount="${realmCount}" seqnum=\"13\"><BODY><PRIMITIVE_SUBMIT getFieldValues=\"true\" updateDeferredValues=\"true\" updateActionSet=\"true\" auditlog=\"Edit checkout for i/o points\" auditenabled=\"true\" auditdetails=\"\" cjDoCommit=\"true\" cjGetChangesFromCore=\"true\"><PRIMITIVE id="${this.id}"><![CDATA[${command}]]></PRIMITIVE></PRIMITIVE_SUBMIT></BODY></MESSAGE></MESSAGES>`;
             return fetch(`http://localhost:8080/_common/servlet/lvl5/msgservlet?wbs=${wbs}`, {
@@ -53,7 +53,6 @@ class Device{
                 "credentials": "include"
             });
     };
-
     checkPrevious(){
         let validity = false;
         this.retrievedValues.forEach((e) => {
@@ -63,14 +62,12 @@ class Device{
         })
         return validity
     }
-    
     getBinary(){
         if(this.status !== this.feedback.textContent){
             this.status = this.feedback.textContent
             console.log(`${this.name} is ${this.status}`)
         }
     }
-
     getAnalog(){
         if(between(this.feedback.textContent, this.command.textContent, 2) && !this.checkPrevious()){
             this.valueChanged = true;
@@ -86,11 +83,6 @@ class Device{
         }
         
     }
-
-
-    retrievedValues = [];
-    faulted = false;
-
     checkFault(){
         if(this.feedback.textContent < 0){
             console.log(`${this.name} faulted`);
@@ -101,7 +93,6 @@ class Device{
             console.log(`${this.name} operational`)
         }
     }
-    
     getStatus(){
         this.status = this.feedback.textContent;
     }
@@ -112,21 +103,7 @@ class Device{
 
 let numberOfFans = 6, fanNames = [], fanObjList = [];
 let floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [];
-
-function createDevices(quantity = 1, childElement, arr, nameList){
-    for(let i = 0; i < quantity; i++){
-        arr[i] = new Device(childElement, nameList[i]);
-        childElement++
-    }
-};
-
-function populateFanStatusNames(){
-    for(let i = 0; i < numberOfFans; i++){
-        fanNames[i] = `SF${i + 1} status`;
-    }
-};
 populateFanStatusNames();
-
 createDevices(fanNames.length, 34, fanObjList, fanNames); //34
 createDevices(3, 30, floatObjList, floatNames);
 
@@ -149,11 +126,47 @@ let vfdFault = new Device(41, 'VFD Fault');
 let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
 let bleed = new Device(56, 'bleed',56 , "prim_2120");
 let airflow = new Device(15, "airflow", undefined, "prim_722")
-
 let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
-let binaryDeviceList = [floatObjList, fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
+let binaryDeviceList = [fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 
+let startDownload = confirm('start download?')
+if(startDownload === true){
+    invokeManualCommand('download');
+}
+
+let startBinaryPoll, startAnalogPoll;
+clearInterval(startBinaryPoll);
+clearTimeout(startAnalogPoll);
+
+startBinaryPoll = setInterval(() => {
+    pollBinary();
+}, 500);
+
+startAnalogPoll = setTimeout(function analogFbks(){
+    pollAnalog();
+    startAnalogPoll = setTimeout(analogFbks, 6000);
+}, 6000);
+
+let acceptButtonLow = document.createElement('button');
+    acceptButtonLow.textContent = 'Accept';
+    acceptButtonLow.style.margin = '0 1.5em';
+
+let updatePreviousArrayButton = document.createElement('button');
+    updatePreviousArrayButton.textContent = 'Update Previous Value';
+
+updatePreviousArrayButton.addEventListener('click',()=>{
+    updatePreviousValue();
+})
+acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
+if(aContent.querySelector('#scrollContent > div').children.length < 2){
+    aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
+    aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
+}
+
+console.log('Polling Inputs...')
+
+/* functions */
 (function fetchStatusOnLoad(){
     sensorList.forEach(e => {e.getStatus()})
     binaryDeviceList.slice(2).forEach(e => e.getStatus())
@@ -172,15 +185,18 @@ let analogDeviceList = [bypassDamper, faceDamper, vfd];
     })
 })()
 
-let startDownload = confirm('start download?')
-if(startDownload === true){
-    invokeManualCommand('download');
-}
+function createDevices(quantity = 1, childElement, arr, nameList){
+    for(let i = 0; i < quantity; i++){
+        arr[i] = new Device(childElement, nameList[i]);
+        childElement++
+    }
+};
 
-let startBinaryPoll, startAnalogPoll;
-clearInterval(startBinaryPoll);
-clearTimeout(startAnalogPoll);
-
+function populateFanStatusNames(){
+    for(let i = 0; i < numberOfFans; i++){
+        fanNames[i] = `SF${i + 1} status`;
+    }
+};
 function between(num, target, range = 2){
     num = parseInt(num);
     target = parseInt(target);
@@ -212,21 +228,11 @@ function pollAnalog(){
     vfd.getAnalog()
 }
 
-startBinaryPoll = setInterval(() => {
-    pollBinary();
-}, 500);
-
-startAnalogPoll = setTimeout(function analogFbks(){
-    pollAnalog();
-    startAnalogPoll = setTimeout(analogFbks, 6000);
-}, 6000);
-
 function showSensors(){
     sensorList.forEach(e => {e.getStatus(); console.log(e.name,':' ,e.status)});
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
-
 
 function flushTank(){
     sump.postReq(1);
@@ -260,34 +266,6 @@ function setGPM(){
     sump.postReq(1);
    return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
 }
-
-console.log('Polling Inputs...')
-
-let stopButton = document.createElement('button');
-    stopButton.textContent = 'Stop All';
-    
-let acceptButtonLow = document.createElement('button');
-    acceptButtonLow.textContent = 'Accept';
-    acceptButtonLow.style.margin = '0 1.5em';
-
-let updatePreviousArrayButton = document.createElement('button');
-    updatePreviousArrayButton.textContent = 'Update Previous Value';
-
-stopButton.addEventListener('click', () =>{
-    clearInterval(startBinaryPoll);
-    clearTimeout(startAnalogPoll);
-    console.log('stopped')   
-})
-updatePreviousArrayButton.addEventListener('click',()=>{
-    updatePreviousValue();
-})
-acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
-if(aContent.querySelector('#scrollContent > div').children.length < 2){
-    aContent.querySelector("#scrollContent > div").append(stopButton);
-    aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
-    aContent.querySelector("#scrollContent > div").append(updatePreviousArrayButton);
-}
-
 function setupAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
         let loggedStatus = device.feedback.textContent;
