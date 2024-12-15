@@ -130,9 +130,21 @@ let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 let binaryDeviceList = [fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 
-let startDownload = confirm('start download?')
+let controllerReady;
+let startDownload = confirm('start download?');
 if(startDownload === true){
     invokeManualCommand('download');
+    controllerReady = setInterval(()=>{
+        if(saTemp.feedback.textContent !== '?'){
+            clearInterval(controllerReady);
+            fillValve.postReq(0);
+            drainValve.postReq(1);
+            faceDamper.postReq(20);
+            bypassDamper.postReq(100);
+            sump.postReq(0);
+            vfdHOA.postReq(0);
+        }
+    },1000)
 }
 
 let startBinaryPoll, startAnalogPoll;
@@ -289,16 +301,15 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
                             },2500)
                         }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
                             clearInterval(timer);
-                            resolve('cleared');
                             console.log(`${device.name} cleared`, device.feedback.textContent)
                         }
                     },withOutput ? 4000 : 250)
                 }, withOutput ? 3500 : 1000); 
         })
     }
-
-function strokeBinaryDevice(device, withOutput = false){
-    return new Promise(function(resolve, reject){
+    
+    function strokeBinaryDevice(device, withOutput = false){
+        return new Promise(function(resolve, reject){
         if(withOutput){
             device.toggle();
         }
@@ -313,7 +324,6 @@ function strokeBinaryDevice(device, withOutput = false){
                 if(loggedStatus != device.feedback.textContent){
                     clearInterval(timer);
                     resolve('cleared');
-                    console.log('cleared')
                 }
             },withOutput ? 3000 : 250)
         }, withOutput ? 3500 : 0);   
@@ -328,13 +338,6 @@ function testBinaryDevice(device, withOutput){
     })
 }
 
-function testFillAndDrain(){
-    testBinaryDevice(fillValve, true).then(()=>{
-        testBinaryDevice(drainValve, true).then(()=>{
-            console.log('Fill and Drain actuators test complete')
-        })
-    })
-}
 
 function testDamper(device, commandValues){
     return new Promise((resolve, reject) =>{
@@ -347,7 +350,14 @@ function testDamper(device, commandValues){
                 device.postReq(commandValues[2]);
             })
         }).catch(reject)
+    })
+}
+function testFillAndDrain(){
+    testBinaryDevice(fillValve, true).then(()=>{
+        testBinaryDevice(drainValve, true).then(()=>{
+            console.log('Fill and Drain actuators test complete')
         })
+    })
 }
 function testFaceAndBypass(){
     testDamper(bypassDamper, [50, 20, 100]).then(()=>{
@@ -372,5 +382,7 @@ function testUnitDevices(){
 
     Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo]).then(()=>{
         console.log('analog inputs test complete')
+        showSensors();
     })
 }
+
