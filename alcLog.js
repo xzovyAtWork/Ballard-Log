@@ -129,7 +129,7 @@ let airflow = new Device(15, "airflow", undefined, "prim_722")
 let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 let binaryDeviceList = [fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
-
+let startBinaryPoll, startAnalogPoll;
 let controllerReady;
 if(saTemp.feedback.textContent == '?'){
     invokeManualCommand('download');
@@ -151,8 +151,6 @@ if(saTemp.feedback.textContent == '?'){
     clearInterval(startBinaryPoll);
     clearTimeout(startAnalogPoll); 
 }
-
-let startBinaryPoll, startAnalogPoll;
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
