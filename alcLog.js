@@ -349,7 +349,7 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
         }, withOutput ? 3500 : 0);   
     })
 }
-function testBinaryDevice(device, withOutput){
+let testBinaryDevice = function(device, withOutput){
     return new Promise((resolve, reject) => {
         strokeBinaryDevice(device, withOutput).then(()=>{
             strokeBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
@@ -394,7 +394,7 @@ function testFloats(){
     })
     }
 function testUnitDevices(){
-    clearInterval(startBinaryPoll);
+    // clearInterval(startBinaryPoll);
     let mixedAirTemp = strokeAnalogDevice(maTemp);
     let supplyAirTemp = strokeAnalogDevice(saTemp);
     let humidityOne = strokeAnalogDevice(rh1);
