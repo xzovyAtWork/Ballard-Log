@@ -98,13 +98,8 @@
         }
         
         startPolling = (isAnalog) =>  setInterval(()=>{
-            // if(this.getValue() !== this.loggedStatus){
-            //     console.log(`${this.name} changed to ${this.loggedStatus}`)
-            // }
-            // if(isAnalog){
-            //     this.updateLoggedStatus('analog')
-            // }
-        },500)
+            this.loggedStatus = this.getValue()
+        },1000)
 
         stopPolling = () => {clearInterval(this.startPolling)};
     }
@@ -123,12 +118,12 @@
     let airflow = new Device("airflow", 722)
 
     //binary IO's
-    let fillValve = new Device('Fill', [1147, 2061]);
-    let drainValve = new Device('Drain', [1205, 2091]);
+    let fillValve = new Device('Fill', [1147, 2052, 2061]);
+    let drainValve = new Device('Drain', [1205, 2082, 2091]);
     let sump = new Device('Pump Status', [1321 , 2140, 2149]);
 
     //binary O's
-    let bleed = new Device('bleed', undefined, [2111, 2120]);
+    let bleed = new Device('bleed', [undefined, 2111, 2120]);
 
     //binary I's
     let leak1 = new Device('MPDC Leak', 1089);
@@ -144,7 +139,7 @@
     let floatObjList = [
         new Device('WOL', 1234),
         new Device('WHL', 1263),
-        new Device('WLL', 1292),
+        new Device('WLL', 1292),    
     ]
 
     let fanObjList = function(len){
@@ -313,57 +308,54 @@
         sump.postReq(1);
     return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
     }
-    function strokeAnalogDevice(device, withOutput = false, commandValue){
-            return new Promise(function(resolve, reject){
-
-                let loggedStatus = parseInt(device.feedback);
-                console.log(loggedStatus)
-                if(withOutput){
-                    console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback);
-                    device.postReq(commandValue);
-                } else{
-                    console.log(device.name,' status:', device.feedback); 
-                }
-                setTimeout(()=>{
-                        let timer = setInterval(()=>{
-                            if(withOutput && (between(device.feedback, device.command,2) && !device.checkPrevious())){
-                                clearInterval(timer);
-                                setTimeout(()=>{
-                                    console.log(device.checkPrevious())
-                                    device.getAnalog(0, 5);
-                                    resolve('cleared');
-                                    console.log(`${device.name} cleared`)
-                                },2500)
-                            }else if(!withOutput && parseInt(device.feedback) > loggedStatus) {
-                                clearInterval(timer);
-                                console.log(`${device.name} cleared`, device.feedback);
-                                resolve();
-                            }
-                        },withOutput ? 4000 : 250)
-                    }, withOutput ? 3500 : 1000); 
-            })
+function strokeAnalogDevice(device, withOutput = false, commandValue){
+    return new Promise(function(resolve, reject){
+        if(withOutput){
+            console.log(`${device.name} commanded:`, commandValue,'status:', device.loggedStatus);
+            device.postReq(commandValue);
+        } else{
+            console.log(device.name,' status:', device.loggedStatus); 
         }
-        function strokeBinaryDevice(device, withOutput = false){
-            return new Promise(function(resolve, reject){
-            if(withOutput){
-                device.toggle();
-            }
-            setTimeout(()=>{ 
-                let loggedStatus = device.feedback
-                if(withOutput){
-                    console.log(`${device.name} commanded:`, device.command,'status:', device.feedback); 
-                } else{
-                    console.log(device.name,' status:', device.feedback); 
-                }
+        setTimeout(()=>{
                 let timer = setInterval(()=>{
-                    if(loggedStatus != device.feedback){
+                    if(withOutput && (between(device.getValue(), device.command,2) && !device.checkPrevious())){
                         clearInterval(timer);
-                        resolve('cleared');
+                        setTimeout(()=>{
+                            console.log(device.checkPrevious())
+                            device.updateLoggedStatus('analog')
+                            resolve('cleared');
+                            console.log(`${device.name} cleared`)
+                        },2500)
+                    }else if(!withOutput && parseInt(device.getValue()) > loggedStatus) {
+                        clearInterval(timer);
+                        console.log(`${device.name} cleared`, device.getValue());
+                        resolve();
                     }
-                },withOutput ? 3000 : 250)
-            }, withOutput ? 3500 : 0);   
-        })
+                },withOutput ? 4000 : 250)
+            }, withOutput ? 3500 : 1000); 
+    })
     }
+function strokeBinaryDevice(device, withOutput = false){
+    return new Promise(function(resolve, reject){
+    if(withOutput){
+        device.toggle();
+    }
+    setTimeout(()=>{ 
+        let loggedStatus = device.getValue()
+        if(withOutput){
+            console.log(`${device.name} commanded:`, device.getValue(device.cmdValueID),'status:', device.getValue()); 
+        } else{
+            console.log(device.name,' status:', device.getValue()); 
+        }
+        let timer = setInterval(()=>{
+            if(loggedStatus != device.getValue()){
+                clearInterval(timer);
+                resolve('cleared');
+            }
+        },withOutput ? 3000 : 250)
+    }, withOutput ? 3500 : 0);   
+    })
+}
     let testBinaryDevice = function(device, withOutput){
         return new Promise((resolve, reject) => {
             strokeBinaryDevice(device, withOutput).then(()=>{
@@ -396,7 +388,8 @@
             testDamper(faceDamper, [50, 100, 20])
         })
     }
-    function testFloats(){
+    let testFloats = () => {
+        floatObjList.forEach(e => {e.stopPolling});
         return new Promise((resolve)=>{
             let resolved = resolve
             let whl = testBinaryDevice(floatObjList[1])
@@ -404,10 +397,11 @@
             let wll = testBinaryDevice(floatObjList[2])
             Promise.all([whl,wol,wll]).then(()=>{
                 console.log(`Floats Test Complete`);
-                resolved();                
+                resolved();   
+                floatObjList.forEach(e => {e.startPolling});             
             })
         })
-        }
+    }
     function testUnitDevices(){
         // clearInterval(startBinaryPoll);
         let mixedAirTemp = strokeAnalogDevice(maTemp);
