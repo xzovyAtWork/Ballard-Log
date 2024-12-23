@@ -271,7 +271,7 @@
         })
         
     function showSensors(){
-        sensorList.forEach(e => {e.getValue(); console.log(e.name,':' ,e.status)});
+        sensorList.forEach(e => {e.getValue(); console.log(e.name,':' ,e.getValue())});
         console.log(faceDamper.name, faceDamper.retrievedValues);
         console.log(bypassDamper.name, bypassDamper.retrievedValues);
     }
