@@ -282,8 +282,9 @@
         fillValve.postReq(0);
 
         let watchdog = setInterval(()=>{
-            if(floatObjList[0].feedback == 'Low'){
+            if(floatObjList[0].getValue() == 'Low'){
                 clearInterval(watchdog);
+                bleed.toggle();
                 console.log('Tank Flushed');
                 setTimeout(()=>{
                     fillValve.toggle();
