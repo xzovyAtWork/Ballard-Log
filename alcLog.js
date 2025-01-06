@@ -230,8 +230,8 @@ function populateFanStatusNames(){
     }
 };
 function between(num, target, range = 2){
-    num = parseInt(num);
-    target = parseInt(target);
+    num = parseFloat(num);
+    target = parseFloat(target);
     return num <= (target + range) && num >= (target - range) 
 }
 function pollSensors(){
