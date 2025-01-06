@@ -148,8 +148,8 @@ if(saTemp.feedback.textContent == '?'){
         }
     },1000)
 }else{
-    clearInterval(startBinaryPoll);
-    clearTimeout(startAnalogPoll); 
+    // clearInterval(startBinaryPoll);
+    // clearTimeout(startAnalogPoll); 
 }
 
 startBinaryPoll = setInterval(() => {
@@ -230,8 +230,8 @@ function populateFanStatusNames(){
     }
 };
 function between(num, target, range = 2){
-    num = parseInt(num);
-    target = parseInt(target);
+    num = parseFloat(num);
+    target = parseFloat(target);
     return num <= (target + range) && num >= (target - range) 
 }
 function pollSensors(){
@@ -401,7 +401,14 @@ function testUnitDevices(){
     let himidityTwo = strokeAnalogDevice(rh2);
     let testAllFloats = testFloats()
 
-    Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]).then(()=>{
+    let arr = [mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]
+    if(parseFloat(saTemp.feedback.textContent) > 0){
+        arr.push(saTemp);
+    }else{
+        console.log('skipping S/A temp')
+    }
+
+    Promise.all(arr).then(()=>{
         console.log('Unit inputs test complete')
         showSensors();
         startBinaryPoll();
