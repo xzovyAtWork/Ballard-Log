@@ -401,7 +401,14 @@ function testUnitDevices(){
     let himidityTwo = strokeAnalogDevice(rh2);
     let testAllFloats = testFloats()
 
-    Promise.all([mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]).then(()=>{
+    let arr = [mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]
+    if(parseFloat(saTemp.feedback.textContent) > 0){
+        arr.push(saTemp);
+    }else{
+        console.log('skipping S/A temp')
+    }
+
+    Promise.all(arr).then(()=>{
         console.log('Unit inputs test complete')
         showSensors();
         startBinaryPoll();
