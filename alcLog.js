@@ -272,7 +272,7 @@ function flushTank(andMedia){
                 console.log('Tank Flushed');
                 drainValve.toggle();
                 fillValve.toggle();
-                if(andMedia){
+                if(!andMedia){
                     setTimeout(()=>{
                         bleed.postReq(1);
                         sump.postReq(1);
@@ -281,7 +281,7 @@ function flushTank(andMedia){
                     bleed.postReq(1);
                     sump.postReq(1);
                 }
-            }, andMedia ? 5 * 60000 : 30000)}
+            }, !andMedia ? 5 * 60000 : 30000)}
     },1000)
 }
 
