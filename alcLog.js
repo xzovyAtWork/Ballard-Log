@@ -143,18 +143,17 @@ if(saTemp.feedback.textContent == '?'){
             bypassDamper.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
-            clearInterval(startBinaryPoll);
-            clearTimeout(startAnalogPoll);
+
         }
     },1000)
 }else{
-    // clearInterval(startBinaryPoll);
-    // clearTimeout(startAnalogPoll); 
+    clearInterval(startBinaryPoll);
+    clearTimeout(startAnalogPoll); 
 }
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
-}, 500);
+}, 1000);
 
 startAnalogPoll = setTimeout(function analogFbks(){
     pollAnalog();
