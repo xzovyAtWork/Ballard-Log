@@ -127,7 +127,7 @@ let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
 let bleed = new Device(56, 'bleed',56 , "prim_2120");
 let airflow = new Device(15, "airflow", undefined, "prim_722")
 let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
-let binaryDeviceList = [fanObjList, fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
+let binaryDeviceList = [fillValve, drainValve, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
@@ -146,10 +146,7 @@ if(saTemp.feedback.textContent == '?'){
 
         }
     },1000)
-}else{
-    clearInterval(startBinaryPoll);
-    clearTimeout(startAnalogPoll); 
-}
+}   
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
@@ -200,7 +197,8 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
 /* functions */
 (function fetchStatusOnLoad(){
     sensorList.forEach(e => {e.getStatus()})
-    binaryDeviceList.slice(2).forEach(e => e.getStatus())
+    fillValve.getStatus();
+    binaryDeviceList.forEach(e => e.getStatus())
     faceDamper.getStatus();
     bypassDamper.getStatus();
     floatObjList.forEach((e) => {
@@ -237,7 +235,7 @@ function pollSensors(){
     sensorList.forEach(e => e.checkFault())
 }
 function pollBinary(){
-    binaryDeviceList.slice(2).forEach(e => e.getBinary())
+    binaryDeviceList.forEach(e => e.getBinary())
     floatObjList.forEach((e) => {
         e.getBinary();
     })
