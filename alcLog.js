@@ -174,24 +174,22 @@ let testFillDrainButton = document.createElement('button');
     testFillDrainButton.style.margin = '0 1.5em';
     testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain()});
 
-let flushTankButton = document.createElement('button');
-    flushTankButton.textContent = 'Flush Tank';
-    flushTankButton.style.margin = '0 1.5em';
-    flushTankButton.addEventListener('click',()=>{flushTank()});
+let drainTankButton = document.createElement('button');
+    drainTankButton.textContent = 'Drain Tank';
+    drainTankButton.style.margin = '0 1.5em';
+    drainTankButton.addEventListener('click',()=>{drainTank()});
 
 let testUnitDevicesButton = document.createElement('button');
     testUnitDevicesButton.textContent = 'Test Inputs';
     testUnitDevicesButton.style.margin = '0 1.5em';
     testUnitDevicesButton.addEventListener('click', ()=>{testUnitDevices()});
 
-
-
 if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(testDampersButton);
     aContent.querySelector("#scrollContent > div").append(testFillDrainButton);
     aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
     aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
-    aContent.querySelector("#scrollContent > div").append(flushTankButton);
+    aContent.querySelector("#scrollContent > div").append(drainTankButton);
 }
 
 /* functions */
@@ -251,7 +249,7 @@ function showSensors(){
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
-function flushTank(andMedia){
+function drainTank(){
     sump.postReq(1);
     bleed.postReq(1);
     drainValve.postReq(0);
@@ -260,28 +258,16 @@ function flushTank(andMedia){
     let watchdog = setInterval(()=>{
         if(floatObjList[0].feedback.textContent == 'Low'){
             clearInterval(watchdog);
-            if(andMedia){
-                sump.postReq(0);
-                bleed.postReq(0);
-                console.log('flushing for 10 minutes', new Date().toLocaleTimeString())
-            }
             setTimeout(()=>{
                 console.log('Tank Flushed');
                 drainValve.toggle();
                 fillValve.toggle();
-                if(!andMedia){
-                    setTimeout(()=>{
-                        bleed.postReq(1);
-                        sump.postReq(1);
-                    },5 * 60000)
-                }else{
-                    bleed.postReq(1);
-                    sump.postReq(1);
-                }
-            }, !andMedia ? 5 * 60000 : 30000)}
+                sump.toggle();
+                bleed.toggle()
+                
+            }, 30000)}
     },1000)
 }
-
 function runBypass(){
     console.log("timer started at:", new Date().toLocaleString())
    return setTimeout(()=>{
@@ -296,55 +282,55 @@ function setGPM(){
    return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
 }
 function strokeAnalogDevice(device, withOutput = false, commandValue){
-        return new Promise(function(resolve, reject){
+    return new Promise(function(resolve, reject){
 
-            let loggedStatus = parseInt(device.feedback.textContent);
-            console.log(loggedStatus)
-            if(withOutput){
-                console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback.textContent);
-                device.postReq(commandValue);
-            } else{
-                console.log(device.name,' status:', device.feedback.textContent); 
-            }
-            setTimeout(()=>{
-                    let timer = setInterval(()=>{
-                        if(withOutput && (between(device.feedback.textContent, device.command.textContent,2) && !device.checkPrevious())){
-                            clearInterval(timer);
-                            setTimeout(()=>{
-                                console.log(device.checkPrevious())
-                                device.getAnalog(0, 5);
-                                resolve('cleared');
-                                console.log(`${device.name} cleared`)
-                            },2500)
-                        }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
-                            clearInterval(timer);
-                            console.log(`${device.name} cleared`, device.feedback.textContent);
-                            resolve();
-                        }
-                    },withOutput ? 4000 : 250)
-                }, withOutput ? 3500 : 1000); 
-        })
-    }
-    function strokeBinaryDevice(device, withOutput = false){
-        return new Promise(function(resolve, reject){
+        let loggedStatus = parseInt(device.feedback.textContent);
+        console.log(loggedStatus)
         if(withOutput){
-            device.toggle();
+            console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback.textContent);
+            device.postReq(commandValue);
+        } else{
+            console.log(device.name,' status:', device.feedback.textContent); 
         }
-        setTimeout(()=>{ 
-            let loggedStatus = device.feedback.textContent
-            if(withOutput){
-                console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
-            } else{
-                console.log(device.name,' status:', device.feedback.textContent); 
-            }
-            let timer = setInterval(()=>{
-                if(loggedStatus != device.feedback.textContent){
-                    clearInterval(timer);
-                    resolve('cleared');
-                }
-            },withOutput ? 3000 : 250)
-        }, withOutput ? 3500 : 0);   
+        setTimeout(()=>{
+                let timer = setInterval(()=>{
+                    if(withOutput && (between(device.feedback.textContent, device.command.textContent,2) && !device.checkPrevious())){
+                        clearInterval(timer);
+                        setTimeout(()=>{
+                            console.log(device.checkPrevious())
+                            device.getAnalog(0, 5);
+                            resolve('cleared');
+                            console.log(`${device.name} cleared`)
+                        },2500)
+                    }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
+                        clearInterval(timer);
+                        console.log(`${device.name} cleared`, device.feedback.textContent);
+                        resolve();
+                    }
+                },withOutput ? 4000 : 250)
+            }, withOutput ? 3500 : 1000); 
     })
+}
+function strokeBinaryDevice(device, withOutput = false){
+    return new Promise(function(resolve, reject){
+    if(withOutput){
+        device.toggle();
+    }
+    setTimeout(()=>{ 
+        let loggedStatus = device.feedback.textContent
+        if(withOutput){
+            console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+        } else{
+            console.log(device.name,' status:', device.feedback.textContent); 
+        }
+        let timer = setInterval(()=>{
+            if(loggedStatus != device.feedback.textContent){
+                clearInterval(timer);
+                resolve('cleared');
+            }
+        },withOutput ? 3000 : 250)
+    }, withOutput ? 3500 : 0);   
+})
 }
 let testBinaryDevice = function(device, withOutput){
     return new Promise((resolve, reject) => {
@@ -389,9 +375,8 @@ function testFloats(){
             resolved();                
         })
     })
-    }
+}
 function testUnitDevices(){
-    // clearInterval(startBinaryPoll);
     let mixedAirTemp = strokeAnalogDevice(maTemp);
     let supplyAirTemp = strokeAnalogDevice(saTemp);
     let humidityOne = strokeAnalogDevice(rh1);
@@ -399,6 +384,7 @@ function testUnitDevices(){
     let testAllFloats = testFloats()
 
     let arr = [mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]
+
     if(parseFloat(saTemp.feedback.textContent) > 0){
         arr.push(saTemp);
     }else{
