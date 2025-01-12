@@ -312,13 +312,15 @@
     }
     function strokeBinaryDevice(device, withOutput = false){
         return new Promise(function(resolve, reject){
-        if(withOutput){
+        if(withOutput && (device.feedback.textContent == device.command.textContent)){
             device.toggle();
+        }else {
+           return reject(`${device.name} feedback and commmand not matching`)
         }
         setTimeout(()=>{ 
             let loggedStatus = device.feedback.textContent
             if(withOutput){
-                console.log(`${device.name} commanded:`, device.command.textContent,'status:', device.feedback.textContent); 
+                console.log(`${device.name} commanded:`, device.command.textContent,'current status:', device.feedback.textContent); 
             } else{
                 console.log(device.name,' status:', device.feedback.textContent); 
             }
