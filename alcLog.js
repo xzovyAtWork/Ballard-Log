@@ -268,6 +268,31 @@
                 }, 30000)}
         },1000)
     }
+
+    function flushTank(){
+        fillValve.postReq(0);
+        drainValve.postReq(0);
+        bleed.postReq(1);
+        sump.postReq(1);
+    
+        let watchdog = setInterval(()=>{
+            if(floatObjList[2].feedback.textContent == 'Normal'){
+               clearInterval(watchdog)
+               sump.toggle();
+                bleed.toggle();
+                drainValve.toggle();
+                fillValve.toggle();
+                console.log('tank refilling at: ', new Date().toLocaleTimeString())
+                let watchWOL = setInterval(()=>{
+                    if(floatObjList[0].feedback.textContent == "Normal"){
+                    sump.postReq(1);
+                    bleed.postReq(1);
+                    clearInterval(watchWOL)
+                }}, 1000)
+            }
+        }, 1000)
+    }
+
     function runBypass(){
         console.log("timer started at:", new Date().toLocaleString())
     return setTimeout(()=>{
@@ -327,7 +352,7 @@
             let timer = setInterval(()=>{
                 if(loggedStatus != device.feedback.textContent){
                     clearInterval(timer);
-                    resolve('cleared');
+                   return resolve('cleared');
                 }
             },withOutput ? 3000 : 250)
         }, withOutput ? 3500 : 0);   
@@ -336,7 +361,8 @@
     let testBinaryDevice = function(device, withOutput){
         return new Promise((resolve, reject) => {
             strokeBinaryDevice(device, withOutput).then(()=>{
-                strokeBinaryDevice(device, withOutput).then(()=>{console.log(`${device.name} test complete`); resolve();})
+                strokeBinaryDevice(device, withOutput).then(()=>{
+                    console.log(`${device.name} test complete`); resolve();})
             })
         })
     }
