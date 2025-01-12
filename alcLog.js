@@ -148,6 +148,8 @@
         },1000)
     }   
 
+    console.log('helper functions: setGPM(), flushTank()')
+
     startBinaryPoll = setInterval(() => {
         pollBinary();
     }, 1000);
