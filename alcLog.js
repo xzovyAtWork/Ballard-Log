@@ -320,7 +320,7 @@
         setTimeout(()=>{ 
             let loggedStatus = device.feedback.textContent
             if(withOutput){
-                console.log(`${device.name} commanded:`, device.command.textContent,'current status:', device.feedback.textContent); 
+                console.log(`${device.name} commanded:`, device.command.textContent,'. Current status:', device.feedback.textContent); 
             } else{
                 console.log(device.name,' status:', device.feedback.textContent); 
             }
