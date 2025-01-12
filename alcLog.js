@@ -258,17 +258,13 @@
         fillValve.postReq(0);
 
         let watchdog = setInterval(()=>{
-            if(floatObjList[0].feedback.textContent == 'Low'){
+            if(floatObjList[2].feedback.textContent == 'Normal'){
                 clearInterval(watchdog);
-                setTimeout(()=>{
-                    console.log('Tank Flushed');
-                    drainValve.toggle();
-                    fillValve.toggle();
-                    sump.toggle();
-                    bleed.toggle()
-                    
-                }, 30000)}
-        },1000)
+                    drainValve.postReq(0);
+                    fillValve.postReq(0);
+                    sump.postReq(0);
+                    bleed.postReq(0)
+            }}, 1000)
     }
 
     function flushTank(){
