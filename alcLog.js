@@ -33,7 +33,7 @@ class Device{
         }
     }
     retrievedValues = [];
-    faulted = false;
+    tested = false;
     toggle(){
         if(this.command.textContent == 'Close' || this.command.textContent == 'Off'|| this.command.textContent == 'Disable'){
             this.postReq(1)
@@ -155,7 +155,7 @@ if(saTemp.feedback.textContent == '?'){
     },1000)
 }   
 
-console.log('helper functions: setGPM(), flushTank()')
+console.log('helper functions: setGPM(), flushTank(), showSensors()')
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
@@ -368,7 +368,8 @@ let testBinaryDevice = function(device, withOutput){
     return new Promise((resolve, reject) => {
         strokeBinaryDevice(device, withOutput).then(()=>{
             strokeBinaryDevice(device, withOutput).then(()=>{
-                console.log(`${device.name} test complete`); resolve();})
+                device.tested = true;
+                console.log(`${device.name} test complete`); resolve(`${device.name}`);})
         })
     })
 }
@@ -382,15 +383,18 @@ function testDamper(device, commandValues){
         strokeAnalogDevice(device, true, commandValues[0]).then(()=>{
             strokeAnalogDevice(device, true, commandValues[1]).then(()=>{
                 tested();
+                device.tested = true;
                 console.log(`${device.name} tested.`);
             })
-        }, ()=>reject()).catch(reject)
+        }).catch(reject)
     })
 }
 function testFillAndDrain(){
     return new Promise((resolve, reject) =>{
     testBinaryDevice(fillValve, true).then(()=>{
+        fillValve.tested = true;
         testBinaryDevice(drainValve, true).then(()=>{
+            drainValve.tested = true;
             resolve('Fill and Drain actuators test complete')
         })
     })
@@ -399,34 +403,36 @@ function testFillAndDrain(){
 }
 function testFaceAndBypass(){
     return new Promise((resolve, reject) =>{
-    testDamper(bypassDamper, [50, 20, 100]).then(()=>{
-        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100)})
+    testDamper(bypassDamper, [50, 20, 100]).then(()=>{bypassDamper.tested = true
+        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
     })
   })
 }
 function testFloats(){
     return new Promise((resolve)=>{
+        let arr = []
         let resolved = resolve
-        let whl = testBinaryDevice(floatObjList[1])
-        let wol = testBinaryDevice(floatObjList[0])
-        let wll = testBinaryDevice(floatObjList[2])
+        let whl = testBinaryDevice(floatObjList[1]).then(()=>{arr.push('WHL')})
+        let wol = testBinaryDevice(floatObjList[0]).then(()=>{arr.push('WOL')})
+        let wll = testBinaryDevice(floatObjList[2]).then(()=>{arr.push('WLL')})
         Promise.all([whl,wol,wll]).then(()=>{
-            console.log(`Floats Test Complete`);
+            console.log(`Floats Test Complete in order:`, arr);
             resolved();                
         })
     })
 }
 function testUnitDevices(){
+    clearInterval(startBinaryPoll);
     let mixedAirTemp = strokeAnalogDevice(maTemp);
     let supplyAirTemp = strokeAnalogDevice(saTemp);
     let humidityOne = strokeAnalogDevice(rh1);
     let himidityTwo = strokeAnalogDevice(rh2);
     let testAllFloats = testFloats()
 
-    let arr = [mixedAirTemp, supplyAirTemp, humidityOne, himidityTwo, testAllFloats]
+    let arr = [mixedAirTemp, humidityOne, himidityTwo, testAllFloats]
 
     if(parseFloat(saTemp.feedback.textContent) > 0){
-        arr.push(saTemp);
+        arr.push(supplyAirTemp);
     }else{
         console.log('skipping S/A temp')
     }
@@ -434,7 +440,9 @@ function testUnitDevices(){
     Promise.all(arr).then(()=>{
         console.log('Unit inputs test complete')
         showSensors();
-        startBinaryPoll();
+        startBinaryPoll = setInterval(() => {
+            pollBinary();
+        }, 1000);
     })
 }
 
