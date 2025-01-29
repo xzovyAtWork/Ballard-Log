@@ -313,7 +313,7 @@ return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
 function strokeAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
 
-        let loggedStatus = parseInt(device.feedback.textContent);
+        let loggedStatus = parseFloat(device.feedback.textContent);
         console.log(loggedStatus)
         if(withOutput){
             console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback.textContent);
@@ -331,7 +331,7 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
                             resolve('cleared');
                             console.log(`${device.name} cleared`)
                         },2500)
-                    }else if(!withOutput && parseInt(device.feedback.textContent) > loggedStatus) {
+                    }else if(!withOutput && parseFloat(device.feedback.textContent) > loggedStatus) {
                         clearInterval(timer);
                         console.log(`${device.name} cleared`, device.feedback.textContent);
                         resolve();
