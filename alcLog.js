@@ -402,6 +402,8 @@ function testFillAndDrain(){
   )
 }
 function testFaceAndBypass(){
+    faceDamper.retrievedValues = [];
+    bypassDamper.retrievedValues = [];
     return new Promise((resolve, reject) =>{
     testDamper(bypassDamper, [50, 20, 100]).then(()=>{bypassDamper.tested = true
         testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
