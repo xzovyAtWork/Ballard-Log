@@ -83,10 +83,11 @@ class Device{
                     if(device.name == 'VFD'){
                         console.log("airflow:",airflow.feedback.textContent)
                     }
+                    resolve(`${device.name} ${device.retrievedValues}`);
                 }, delay)
-                resolve();
-            }
-            
+            } else if(device.checkPrevious() == true){
+                reject('value already recorded')
+            }    
         })
     }
     checkFault(){
@@ -375,26 +376,33 @@ function testDamper(device, commandValues){
     return new Promise((resolve, reject) =>{
         let tested = resolve;
         device.getAnalog(0, 5); 
+        if(parseInt(device.feedback.textContent) <= 0){
+            return reject(`${device.name} feedback faulty`)
+        }
         strokeAnalogDevice(device, true, commandValues[0]).then(()=>{
             strokeAnalogDevice(device, true, commandValues[1]).then(()=>{
                 tested();
                 console.log(`${device.name} tested.`);
-                device.postReq(commandValues[2]);
             })
-        }).catch(reject)
+        }, ()=>reject()).catch(reject)
     })
 }
 function testFillAndDrain(){
+    return new Promise((resolve, reject) =>{
     testBinaryDevice(fillValve, true).then(()=>{
         testBinaryDevice(drainValve, true).then(()=>{
-            console.log('Fill and Drain actuators test complete')
+            resolve('Fill and Drain actuators test complete')
         })
     })
+   }
+  )
 }
 function testFaceAndBypass(){
+    return new Promise((resolve, reject) =>{
     testDamper(bypassDamper, [50, 20, 100]).then(()=>{
-        testDamper(faceDamper, [50, 100, 20])
+        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100)})
     })
+  })
 }
 function testFloats(){
     return new Promise((resolve)=>{
@@ -430,21 +438,21 @@ function testUnitDevices(){
     })
 }
 
-function rampFans(){
-    clearInterval(pollAnalog)
-    vfdHOA.postReq(1);
-    vfd.postReq(0);
-    vfd.retrievedValues = [];
-    let value = 0;
-    async function increaseSpeed(){
-        if(value < 100){
-            console.log(value)
-        return new Promise((resolve, reject) => {
-                vfd.getAnalog().then(()=>vfd.postReq(value += 25).then(()=>{resolve()}))
-            })
-        
-        }
-    }
-    increaseSpeed().then(()=>increaseSpeed()).then(()=>increaseSpeed()).then(()=>increaseSpeed())
+// function rampFans(){
+    // clearInterval(pollAnalog)
+    // vfdHOA.postReq(1);
+    // vfd.postReq(0);
+    // vfd.retrievedValues = [];
+    // let value = 0;
+    // function increaseSpeed(){
+    //     if(value <= 75){
+    //         console.log(value, 'first')
 
-}
+    //     return new Promise((resolve, reject) => {
+    //         vfd.getAnalog(0).then(()=>vfd.postReq(value += 25).then(resolve))
+    //         console.log(value)
+    //         })
+        
+    //     }
+    // }
+// }
