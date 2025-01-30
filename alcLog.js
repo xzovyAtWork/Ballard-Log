@@ -268,6 +268,20 @@ function drainTank(){
                 bleed.postReq(0)
         }}, 1000)
 }
+function checkFloatPolarity(){
+    if(floatObjList[0].feedback.textContent == 'Normal'){
+        console.log('WOL FLOAT SWITCH UPSIDE DOWN!')
+    }
+    if(floatObjList[1].feedback.textContent =='Alarm'){
+        console.log('WHL FLOAT SWITCH UPSIDE DOWN!')
+    }
+    if(floatObjList[2].feedback.textContent == 'Low'){
+        console.log('WLL FLOAT SWITCH UPSIDE DOWN!')
+    }else{
+        console.log('Float switches in correct orientation if tank is empty.')
+    }
+    
+}
 
 function flushTank(){
     fillValve.postReq(0);
@@ -407,6 +421,7 @@ function testFaceAndBypass(){
   })
 }
 function testFloats(){
+    checkFloatPolarity();
     return new Promise((resolve)=>{
         let arr = []
         let resolved = resolve
