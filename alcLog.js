@@ -138,6 +138,7 @@ let binaryDeviceList = [fillValve, drainValve, leak1, leak2, primary, secondary,
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
+//init commands
 if(saTemp.feedback.textContent == '?'){
     invokeManualCommand('download');
     controllerReady = setInterval(()=>{
@@ -150,6 +151,7 @@ if(saTemp.feedback.textContent == '?'){
             bypassDamper.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
+            vfd.postReq(0);
 
         }
     },1000)
@@ -160,11 +162,6 @@ console.log('helper functions: setGPM(), flushTank(), showSensors()')
 startBinaryPoll = setInterval(() => {
     pollBinary();
 }, 1000);
-
-// startAnalogPoll = setTimeout(function analogFbks(){
-//     pollAnalog();
-//     startAnalogPoll = setTimeout(analogFbks, 6000);
-// }, 6000);
 
 aContent.querySelector("#scrollContent > div > span").style.display = 'none'
 
@@ -267,8 +264,6 @@ function drainTank(){
     let watchdog = setInterval(()=>{
         if(floatObjList[2].feedback.textContent == 'Normal'){
             clearInterval(watchdog);
-                drainValve.postReq(0);
-                fillValve.postReq(0);
                 sump.postReq(0);
                 bleed.postReq(0)
         }}, 1000)
@@ -300,6 +295,7 @@ function flushTank(){
 
 function runBypass(){
     console.log("timer started at:", new Date().toLocaleString())
+    fillValve.postReq(0)
 return setTimeout(()=>{
         drainValve.postReq(0);
         sump.postReq(0);
@@ -454,7 +450,7 @@ function testUnitDevices(){
     // vfd.postReq(0);
     // vfd.retrievedValues = [];
     // let value = 0;
-    // function increaseSpeed(){
+    // async function increaseSpeed(){
     //     if(value <= 75){
     //         console.log(value, 'first')
 
