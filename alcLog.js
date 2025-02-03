@@ -87,7 +87,9 @@ class Device{
                 }, delay)
             } else if(device.checkPrevious() == true){
                 reject('value already recorded')
-            }    
+            } else if(!between(device.feedback.textContent, device.command.textContent, range)){
+                reject('out of range')
+            } 
         })
     }
     checkFault(){
@@ -157,7 +159,7 @@ if(saTemp.feedback.textContent == '?'){
     },1000)
 }   
 
-console.log('helper functions: setGPM(), flushTank(), showSensors()')
+console.log('helper functions: setGPM(), flushTank(), showSensors(), incrementFans()')
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
@@ -324,9 +326,7 @@ return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
 }
 function strokeAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
-
         let loggedStatus = parseFloat(device.feedback.textContent);
-        console.log(loggedStatus)
         if(withOutput){
             console.log(`${device.name} commanded:`, commandValue,'status:', device.feedback.textContent);
             device.postReq(commandValue);
@@ -460,21 +460,7 @@ function testUnitDevices(){
     })
 }
 
-// function rampFans(){
-    // clearInterval(pollAnalog)
-    // vfdHOA.postReq(1);
-    // vfd.postReq(0);
-    // vfd.retrievedValues = [];
-    // let value = 0;
-    // async function increaseSpeed(){
-    //     if(value <= 75){
-    //         console.log(value, 'first')
-
-    //     return new Promise((resolve, reject) => {
-    //         vfd.getAnalog(0).then(()=>vfd.postReq(value += 25).then(resolve))
-    //         console.log(value)
-    //         })
-        
-    //     }
-    // }
-// }
+let value = 0
+function incrementFans(){
+    vfd.getAnalog(0).then(()=>{if(value < 100){vfd.postReq(value += 25)}}).then(()=>{if(value == 100){vfd.getAnalog(5000)}})
+    }
