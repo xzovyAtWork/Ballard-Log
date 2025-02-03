@@ -91,7 +91,7 @@ class Device{
         })
     }
     checkFault(){
-        if(this.feedback.textContent < 0){
+        if(this.feedback.textContent <= 0){
             console.log(`${this.name} faulted`);
             this.faulted = true;
         }
@@ -259,7 +259,8 @@ function drainTank(){
     sump.postReq(1);
     bleed.postReq(1);
     drainValve.postReq(0);
-    fillValve.postReq(0);
+    // fillValve.postReq(0);
+    console.log('Draining Tank, Turn off main water supply')
 
     let watchdog = setInterval(()=>{
         if(floatObjList[2].feedback.textContent == 'Normal'){
