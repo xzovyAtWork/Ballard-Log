@@ -462,5 +462,9 @@ function testUnitDevices(){
 
 let value = 0
 function incrementFans(){
-    vfd.getAnalog(0).then(()=>{if(value < 100){vfd.postReq(value += 25)}}).then(()=>{if(value == 100){vfd.getAnalog(5000)}})
+    if(value < 100){
+        vfd.getAnalog(0).then(()=>vfd.postReq(value += 25))
+    }else{
+        vfd.getAnalog(0)
     }
+}
