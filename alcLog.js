@@ -311,12 +311,12 @@ function flushTank(){
 }
 
 function runBypass(){
-    console.log("timer started at:", new Date().toLocaleString())
-    fillValve.postReq(0)
+    console.log("bypass timer started at:", new Date().toLocaleString())
+    // fillValve.postReq(0)
 return setTimeout(()=>{
         drainValve.postReq(0);
         sump.postReq(0);
-        console.log("bypass test finished")
+        console.log("bypass test finished. draining tank. Turn off main water supply")
     }, 30 * 60000)
 }
 function setGPM(){
@@ -462,6 +462,9 @@ function testUnitDevices(){
 
 let value = 0
 function incrementFans(){
+    if(value = 0){
+        vfdHOA.postReq(1)
+    }
     if(value < 100){
         vfd.getAnalog(0).then(()=>vfd.postReq(value += 25))
     }else{
