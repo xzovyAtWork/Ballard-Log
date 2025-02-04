@@ -140,6 +140,7 @@ let binaryDeviceList = [fillValve, drainValve, leak1, leak2, primary, secondary,
 let analogDeviceList = [bypassDamper, faceDamper, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
+
 //init commands
 if(saTemp.feedback.textContent == '?'){
     invokeManualCommand('download');
@@ -182,10 +183,10 @@ let testFillDrainButton = document.createElement('button');
     testFillDrainButton.style.margin = '0 1.5em';
     testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain()});
 
-let drainTankButton = document.createElement('button');
-    drainTankButton.textContent = 'Drain Tank';
-    drainTankButton.style.margin = '0 1.5em';
-    drainTankButton.addEventListener('click',()=>{drainTank()});
+let evapTankButton = document.createElement('button');
+    evapTankButton.style.margin = '0 1.5em';
+    evapTankButton.textContent = 'Fill Tank';
+    evapTankButton.addEventListener('click',()=>{fillTank()});
 
 let testUnitDevicesButton = document.createElement('button');
     testUnitDevicesButton.textContent = 'Test Inputs';
@@ -197,7 +198,7 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(testFillDrainButton);
     aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
     aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
-    aContent.querySelector("#scrollContent > div").append(drainTankButton);
+    aContent.querySelector("#scrollContent > div").append(evapTankButton);
 }
 
 /* functions */
@@ -257,20 +258,7 @@ function showSensors(){
     console.log(faceDamper.name, faceDamper.retrievedValues);
     console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
-function drainTank(){
-    sump.postReq(1);
-    bleed.postReq(1);
-    drainValve.postReq(0);
-    // fillValve.postReq(0);
-    console.log('Draining Tank, Turn off main water supply')
 
-    let watchdog = setInterval(()=>{
-        if(floatObjList[2].feedback.textContent == 'Normal'){
-            clearInterval(watchdog);
-                sump.postReq(0);
-                bleed.postReq(0)
-        }}, 1000)
-}
 function checkFloatPolarity(){
     if(floatObjList[0].feedback.textContent == 'Normal'){
         console.log('WOL FLOAT SWITCH UPSIDE DOWN!')
@@ -285,7 +273,22 @@ function checkFloatPolarity(){
     }
     
 }
+function drainTank(){
+    sump.postReq(1);
+    bleed.postReq(1);
+    drainValve.postReq(0);
+    // fillValve.postReq(0);
+    console.log('Draining sump tank. Turn off main water supply');
+    evapTankButton.textContent = 'Fill Tank';
+    evapTankButton.addEventListener('click',()=>{fillTankc ()});
 
+    let watchdog = setInterval(()=>{
+        if(floatObjList[2].feedback.textContent == 'Normal'){
+            clearInterval(watchdog);
+                sump.postReq(0);
+                bleed.postReq(0)
+        }}, 1000)
+}
 function flushTank(){
     fillValve.postReq(0);
     drainValve.postReq(0);
@@ -309,7 +312,13 @@ function flushTank(){
         }
     }, 1000)
 }
-
+function fillTank(){
+    drainValve.postReq(1);
+    fillValve.postReq(1);
+    console.log('filling tank...')
+    evapTankButton.textContent = 'Drain Tank';
+    evapTankButton.addEventListener('click',()=>{drainTank()});
+}
 function runBypass(){
     console.log("bypass timer started at:", new Date().toLocaleString())
     // fillValve.postReq(0)
@@ -462,7 +471,8 @@ function testUnitDevices(){
 
 let value = 0
 function incrementFans(){
-    if(value = 0){
+    if(value == 0){
+        vfd.retrievedValues = [];
         vfdHOA.postReq(1)
     }
     if(value < 100){
