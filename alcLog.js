@@ -74,7 +74,6 @@ class Device{
         return new Promise((resolve, reject) => {
             
             if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious() !== true){
-                console.log(between(device.feedback.textContent, device.command.textContent, range),  !device.checkPrevious())
                 device.valueChanged = true;
                 setTimeout(()=>{
                     device.retrievedValues.push(parseFloat(device.feedback.textContent))
@@ -341,6 +340,9 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
             device.postReq(commandValue);
         } else{
             console.log(device.name,' status:', device.feedback.textContent); 
+        }
+        if(loggedStatus < 0){
+            return reject(`${device.name} under range`)
         }
 
         setTimeout(()=>{
