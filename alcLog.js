@@ -159,7 +159,7 @@ if(saTemp.feedback.textContent == '?'){
     },1000)
 }   
 
-console.log('helper functions: setGPM(), flushTank(), showSensors(), incrementFans()')
+console.log('helper functions: setGPM(), runBypass(), flushTank(), showSensors(), incrementFans()')
 
 startBinaryPoll = setInterval(() => {
     pollBinary();
