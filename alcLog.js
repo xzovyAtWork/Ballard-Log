@@ -448,7 +448,6 @@ function testFloats(){
 }
 function testUnitDevices(){
     clearInterval(startBinaryPoll);
-    console.log("Binary Inputs Logging Stopped..")
     let mixedAirTemp = strokeAnalogDevice(maTemp);
     let supplyAirTemp = strokeAnalogDevice(saTemp);
     let humidityOne = strokeAnalogDevice(rh1);
@@ -462,6 +461,7 @@ function testUnitDevices(){
     }else{
         console.log('skipping S/A temp')
     }
+    console.log("Binary Inputs Logging Stopped.. test these devices:", arr)
 
     Promise.all(arr).then(()=>{
         console.log('Unit inputs test complete. Logging Binary Inputs...')
