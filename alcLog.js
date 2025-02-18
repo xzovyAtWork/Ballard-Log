@@ -150,6 +150,17 @@ bypassButton.textContent= 'Run Bypass';
 bypassButton.addEventListener('click', runBypass)
 aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
 
+const fanTimerButton = document.createElement('button');
+fanTimerButton.textContent = "Start Fan Timer"
+fanTimerButton.addEventListener('click', ()=>{
+    let duration = prompt('How many minutes?',30);
+    duration = parseInt(duration) * 60000;
+    setTimeout(()=>{vfdHOA.postReq(0); console.log('fans stopped at timer')}, duration);
+    let time = new Date().toLocaleTimeString();
+    console.log('fan timer started at : ', time)
+})
+aContent.querySelector("#bodyTable > tbody > tr:nth-child(59) > td.left").append(fanTimerButton)
+
 const gpmButton = document.createElement('button');
 gpmButton.textContent = "Set GPM"
 gpmButton.addEventListener('click', setGPM)
@@ -170,7 +181,6 @@ if(saTemp.feedback.textContent == '?'){
             sump.postReq(0);
             vfdHOA.postReq(0);
             vfd.postReq(0);
-
         }
     },1000)
 }   
@@ -349,7 +359,8 @@ return setTimeout(()=>{
 function setGPM(){
     bleed.postReq(1);
     sump.postReq(1);
-return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 60000);
+    console.log('running bleed for 5 minutes...')
+return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 5 * 60000);
 }
 function strokeAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
@@ -430,6 +441,26 @@ function testDamper(device, commandValues){
         }).catch(reject)
     })
 }
+function testVFD(device, commandValues){
+    device.retrievedValues = [];
+    vfdHOA.postReq(1);
+    return new Promise((resolve, reject) =>{
+        let tested = resolve;
+        device.getAnalog(0, 5);
+        strokeAnalogDevice(device, true, commandValues[0]).then(()=>{
+            strokeAnalogDevice(device, true, commandValues[1]).then(()=>{
+                strokeAnalogDevice(device, true, commandValues[2]).then(()=>{
+                    strokeAnalogDevice(device, true, commandValues[3]).then(()=>{
+                        
+                        tested();
+                        device.tested = true;
+                        console.log(`${device.name} tested.`);
+                })
+              }) 
+            })
+        }).catch(reject)
+    })
+}
 function testFillAndDrain(){
     return new Promise((resolve, reject) =>{
     testBinaryDevice(fillValve, true).then(()=>{
@@ -487,20 +518,24 @@ function testFloats(){
     }
 
 function rampFans(){
-    let timer = setInterval(()=>{
-        if(value == 100){clearInterval(timer)}
-        incrementFans()
-    }, 7000)
+    testEnableVFD().then((r)=>{
+        console.log(r);
+        return setTimeout(()=>{testVFD(vfd, [25,50,75,100])}, 5000);
+    })
 }
-let value = 0
-function incrementFans(){
-    if(value == 0){
-        vfd.retrievedValues = [];
-        vfdHOA.postReq(1)
-    }
-    if(value < 100){
-        vfd.getAnalog(0).then(()=>vfd.postReq(value += 25))
-    }else{
-        vfd.getAnalog(0)
-    }
+function testEnableVFD(){
+    return new Promise((resolve, reject)=>{
+        
+        vfdHOA.postReq(0);
+        vfd.postReq(25);
+        setTimeout(()=>{
+            if (parseFloat(vfd.feedback.textContent) > 2){
+               reject('VFD Enable not working')
+                vfd.postReq(0);
+            }else{
+               resolve('VFD Enable working, Ramping Fans..');
+                vfd.postReq(0);
+            }
+        }, 7000)
+    })
 }
