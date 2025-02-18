@@ -140,6 +140,22 @@ let analogDeviceList = [bypassDamper, faceDamper, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
 
+const rampfansButton = document.createElement('button');
+rampfansButton.textContent= 'Ramp Fans'
+rampfansButton.addEventListener('click', rampFans)
+aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
+
+const bypassButton = document.createElement('button');
+bypassButton.textContent= 'Run Bypass';
+bypassButton.addEventListener('click', runBypass)
+aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
+
+const gpmButton = document.createElement('button');
+gpmButton.textContent = "Set GPM"
+gpmButton.addEventListener('click', setGPM)
+aContent.querySelector("#bodyTable > tbody > tr:nth-child(56) > td.left").append(gpmButton)
+
+
 //init commands
 if(saTemp.feedback.textContent == '?'){
     invokeManualCommand('download');
@@ -472,6 +488,12 @@ function testUnitDevices(){
     })
 }
 
+function rampFans(){
+    let timer = setInterval(()=>{
+        if(value == 100){clearInterval(timer)}
+        incrementFans()
+    }, 7000)
+}
 let value = 0
 function incrementFans(){
     if(value == 0){
