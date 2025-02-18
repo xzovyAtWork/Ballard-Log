@@ -178,7 +178,19 @@ if(saTemp.feedback.textContent == '?'){
 console.log('helper functions: setGPM(), runBypass(), flushTank(), showSensors(), incrementFans()')
 
 startBinaryPoll = setInterval(() => {
-    pollBinary();
+        binaryDeviceList.forEach(e => e.getBinary())
+}, 1000);
+
+starFansPoll = setInterval(() => {
+    fanObjList.forEach((e) => {
+        e.getBinary();
+    })
+}, 1000);
+
+startFloatsPoll = setInterval(() => {
+    floatObjList.forEach((e) => {
+        e.getBinary();
+    })
 }, 1000);
 
 aContent.querySelector("#scrollContent > div > span").style.display = 'none'
@@ -256,15 +268,7 @@ function between(num, target, range = 2){
 function pollSensors(){
     sensorList.forEach(e => e.checkFault())
 }
-function pollBinary(){
-    binaryDeviceList.forEach(e => e.getBinary())
-    floatObjList.forEach((e) => {
-        e.getBinary();
-    })
-    fanObjList.forEach((e) => {
-        e.getBinary();
-    })
-}
+
 function pollAnalog(){
     vfd.getAnalog()
 }
@@ -450,6 +454,7 @@ function testFaceAndBypass(){
 }
 function testFloats(){
     checkFloatPolarity();
+    clearInterval(startFloatsPoll);
     return new Promise((resolve)=>{
         let arr = []
         let resolved = resolve
@@ -458,35 +463,33 @@ function testFloats(){
         let wll = testBinaryDevice(floatObjList[2]).then(()=>{arr.push('WLL')})
         Promise.all([whl,wol,wll]).then(()=>{
             console.log(`Floats Test Complete in order:`, arr);
-            resolved();                
+            resolved();
+            startFloatsPoll = setInterval(() => {
+                pollBinary();
+            }, 1000);                
         })
     })
 }
-function testUnitDevices(){
-    clearInterval(startBinaryPoll);
-    let mixedAirTemp = strokeAnalogDevice(maTemp);
-    let supplyAirTemp = strokeAnalogDevice(saTemp);
-    let humidityOne = strokeAnalogDevice(rh1);
-    let himidityTwo = strokeAnalogDevice(rh2);
-    let testAllFloats = testFloats()
+    function testUnitDevices(){
+        // clearInterval(startBinaryPoll);
 
-    let arr = [mixedAirTemp, humidityOne, himidityTwo, testAllFloats]
+        let arr = [strokeAnalogDevice(maTemp), strokeAnalogDevice(rh1), strokeAnalogDevice(rh2), testFloats()]
 
-    if(parseFloat(saTemp.feedback.textContent) > 0){
-        arr.push(supplyAirTemp);
-    }else{
-        console.log('skipping S/A temp')
+        if(parseFloat(saTemp.feedback.textContent) > 0){
+            arr.push(strokeAnalogDevice(saTemp));
+        }else{
+            console.log('skipping S/A temp')
+        }
+        console.log("Binary Inputs Logging Stopped...")
+
+        Promise.all(arr).then(()=>{
+            console.log('Unit inputs test complete. Logging Binary Inputs...')
+            showSensors();
+            // startBinaryPoll = setInterval(() => {
+            //     pollBinary();
+            // }, 1000);
+        })
     }
-    console.log("Binary Inputs Logging Stopped.. test these devices:", arr)
-
-    Promise.all(arr).then(()=>{
-        console.log('Unit inputs test complete. Logging Binary Inputs...')
-        showSensors();
-        startBinaryPoll = setInterval(() => {
-            pollBinary();
-        }, 1000);
-    })
-}
 
 function rampFans(){
     let timer = setInterval(()=>{
