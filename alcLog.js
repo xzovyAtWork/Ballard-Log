@@ -296,7 +296,6 @@ function drainTank(){
     sump.postReq(1);
     bleed.postReq(1);
     drainValve.postReq(0);
-    // fillValve.postReq(0);
     console.log('Draining sump tank. Turn off main water supply');
     evapTankButton.textContent = 'Fill Tank';
     evapTankButton.addEventListener('click',()=>{fillTankc ()});
@@ -471,7 +470,6 @@ function testFloats(){
     })
 }
     function testUnitDevices(){
-        // clearInterval(startBinaryPoll);
 
         let arr = [strokeAnalogDevice(maTemp), strokeAnalogDevice(rh1), strokeAnalogDevice(rh2), testFloats()]
 
@@ -485,9 +483,6 @@ function testFloats(){
         Promise.all(arr).then(()=>{
             console.log('Unit inputs test complete. Logging Binary Inputs...')
             showSensors();
-            // startBinaryPoll = setInterval(() => {
-            //     pollBinary();
-            // }, 1000);
         })
     }
 
