@@ -488,13 +488,14 @@ function testFloats(){
     return new Promise((resolve)=>{
         let arr = []
         let resolved = resolve
-        let whl = testBinaryDevice(floatObjList[1]).then(()=>{arr.push('WHL')})
-        let wol = testBinaryDevice(floatObjList[0]).then(()=>{arr.push('WOL')})
-        let wll = testBinaryDevice(floatObjList[2]).then(()=>{arr.push('WLL')})
-        Promise.all([whl,wol,wll]).then(()=>{
+        Promise.all([
+            testBinaryDevice(floatObjList[1]).then(()=>{arr.push('WHL')}), 
+            testBinaryDevice(floatObjList[0]).then(()=>{arr.push('WOL')}),
+            testBinaryDevice(floatObjList[2]).then(()=>{arr.push('WLL')})
+            ]).then(()=>{
             console.log(`Floats Test Complete in order:`, arr);
             resolved();
-            startFloatsPoll = setInterval(() => {
+            startFloatsPoll = () => setInterval(() => {
                 pollBinary();
             }, 1000);                
         })
