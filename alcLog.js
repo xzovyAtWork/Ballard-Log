@@ -16,6 +16,16 @@ const refUrl = `http://localhost:8080/~dbid/1651?a=properties&c=default&i=equipm
 const aContent = document.querySelector('.actionFrame').contentWindow.document.childNodes[1];
 let lastPushed;
 
+const start= new Date();
+const startTime = start.toLocaleTimeString();
+const end = new Date(start.getTime()+(4* (60 * 60000)))
+function elapsedTime(){
+    let time = ((new Date() - start)/60000)/60;
+    if(time < 1){
+       return `${time * 60} minutes`
+    } else {return `${time} hours`}
+}
+
 class Device{
     constructor(statusChildNode, name, commandChildNode = undefined, id =''){
         this.name = name;
@@ -155,9 +165,13 @@ fanTimerButton.textContent = "Start Fan Timer"
 fanTimerButton.addEventListener('click', ()=>{
     let duration = prompt('How many minutes?',30);
     duration = parseInt(duration) * 60000;
-    setTimeout(()=>{vfdHOA.postReq(0); console.log('fans stopped at timer')}, duration);
+    setTimeout(()=>{
+        vfdHOA.postReq(0); console.log('fans stopped at timer');
+        console.log('test duration:', ((new Date() - start)/60000)/60, "hours")
+    }, duration);
     let time = new Date().toLocaleTimeString();
     console.log('fan timer started at : ', time)
+    
 })
 aContent.querySelector("#bodyTable > tbody > tr:nth-child(59) > td.left").append(fanTimerButton)
 
@@ -495,9 +509,11 @@ function testFloats(){
             ]).then(()=>{
             console.log(`Floats Test Complete in order:`, arr);
             resolved();
-            startFloatsPoll = () => setInterval(() => {
-                pollBinary();
-            }, 1000);                
+            startFloatsPoll = setInterval(() => {
+                floatObjList.forEach((e) => {
+                    e.getBinary();
+                })
+            }, 1000);             
         })
     })
 }
