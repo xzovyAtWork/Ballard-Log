@@ -322,7 +322,7 @@ function drainTank(){
     drainValve.postReq(0);
     console.log('Draining sump tank. Turn off main water supply');
     evapTankButton.textContent = 'Fill Tank';
-    evapTankButton.addEventListener('click',()=>{fillTankc ()});
+    evapTankButton.addEventListener('click',()=>{fillTank()});
 
     let watchdog = setInterval(()=>{
         if(floatObjList[2].feedback.textContent == 'Normal'){
