@@ -1,5 +1,5 @@
-let realmCount = main.getActionWindow().primitiveRequestRealm.realmCount;
-let wbs = main.getActionWindow().primitiveRequestRealm.wbsId;
+const realmCount = main.getActionWindow().primitiveRequestRealm.realmCount;
+const wbs = main.getActionWindow().primitiveRequestRealm.wbsId;
     
 const headerObj = {
     "accept": "*/*",
@@ -112,58 +112,61 @@ class Device{
         }
     }
     getStatus(){
-        this.status = this.feedback.textContent;
+       return this.status = this.feedback.textContent;
     }
     clearRetrievedValues(){
         this.retrievedValues = [];
     }
 }
 
-let numberOfFans = 6, fanNames = [], fanObjList = [];
-let floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [];
+const numberOfFans = 6, fanNames = [], fanObjList = [];
+const floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [];
 populateFanStatusNames();
 createDevices(fanNames.length, 34, fanObjList, fanNames); //34
 createDevices(3, 30, floatObjList, floatNames);
+const wol = floatObjList[0];
+const whl= floatObjList[1];
+const wll = floatObjList[2]
 
-let faceDamper = new Device(8, 'Face Damper', 52,"prim_1975" );
-let bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
-let fill = new Device(27, 'Fill', 54, "prim_2061");
-let drain = new Device(29, 'Drain', 55, "prim_2091");
-let leak1 = new Device(25, 'MPDC Leak');
-let leak2 = new Device(26, 'Mech. Gallery Leak Detector');
-let conductivity = new Device(10, 'Conductivity');
-let maTemp = new Device(11, 'M/A');
-let saTemp = new Device(1, 'S/A');
-let rh1 = new Device(12, 'RH One');
-let rh2 = new Device(13, 'RH Two');
-let primary = new Device(42, 'UPS Primary Status')
-let secondary = new Device(43, 'Secondary Status')
-let vfd = new Device(16, 'VFD', 46, "prim_1709"); //speed command
-let vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
-let vfdFault = new Device(41, 'VFD Fault');
-let sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
-let bleed = new Device(56, 'bleed',56 , "prim_2120");
-let airflow = new Device(15, "airflow", undefined, "prim_722")
-let sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
-let binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
-let analogDeviceList = [bypassDamper, faceDamper, vfd];
+const faceDamper = new Device(8, 'Face Damper', 52,"prim_1975" );
+const bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
+const fill = new Device(27, 'Fill', 54, "prim_2061");
+const drain = new Device(29, 'Drain', 55, "prim_2091");
+const leak1 = new Device(25, 'MPDC Leak');
+const leak2 = new Device(26, 'Mech. Gallery Leak Detector');
+const conductivity = new Device(10, 'Conductivity');
+const maTemp = new Device(11, 'M/A');
+const saTemp = new Device(1, 'S/A');
+const rh1 = new Device(12, 'RH One');
+const rh2 = new Device(13, 'RH Two');
+const primary = new Device(42, 'UPS Primary Status')
+const secondary = new Device(43, 'Secondary Status')
+const vfd = new Device(16, 'VFD', 46, "prim_1709"); //speed command
+const vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
+const vfdFault = new Device(41, 'VFD Fault');
+const sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
+const bleed = new Device(56, 'bleed',56 , "prim_2120");
+const airflow = new Device(15, "airflow", undefined, "prim_722")
+const sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
+const binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
+const analogDeviceList = [bypassDamper, faceDamper, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
 
 const rampfansButton = document.createElement('button');
-rampfansButton.textContent= 'Ramp Fans'
-rampfansButton.addEventListener('click', rampFans)
-aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
+    rampfansButton.textContent= 'Ramp Fans'
+    rampfansButton.addEventListener('click', rampFans)
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
 
 const bypassButton = document.createElement('button');
-bypassButton.textContent= 'Run Bypass';
-bypassButton.addEventListener('click', runBypass)
-aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
+    bypassButton.textContent= 'Run Bypass';
+    bypassButton.addEventListener('click', runBypass)
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
 
 const fanTimerButton = document.createElement('button');
-fanTimerButton.textContent = "Start Fan Timer"
-fanTimerButton.addEventListener('click', ()=>{
-    let duration = prompt('How many minutes?',30);
+    fanTimerButton.textContent = "Start Fan Timer"
+    fanTimerButton.addEventListener('click', ()=>{
+let duration = prompt('How many minutes?',30);
     duration = parseInt(duration) * 60000;
     setTimeout(()=>{
         vfdHOA.postReq(0); console.log('fans stopped at timer');
@@ -219,27 +222,27 @@ startFloatsPoll = setInterval(() => {
 
 aContent.querySelector("#scrollContent > div > span").style.display = 'none'
 
-let acceptButtonLow = document.createElement('button');
+const acceptButtonLow = document.createElement('button');
     acceptButtonLow.textContent = 'Accept';
     acceptButtonLow.style.margin = '0 1.5em';
     acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
 
-let testDampersButton = document.createElement('button');
+const testDampersButton = document.createElement('button');
     testDampersButton.textContent = 'Test Dampers';
     testDampersButton.style.margin = '0 1.5em';
     testDampersButton.addEventListener('click', ()=>{testFaceAndBypass();});
 
-let testFillDrainButton = document.createElement('button');
+const testFillDrainButton = document.createElement('button');
     testFillDrainButton.textContent = 'Test Fill/Drain';
     testFillDrainButton.style.margin = '0 1.5em';
     testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain()});
 
-let evapTankButton = document.createElement('button');
+const evapTankButton = document.createElement('button');
     evapTankButton.style.margin = '0 1.5em';
     evapTankButton.textContent = 'Fill Tank';
     evapTankButton.addEventListener('click',()=>{fillTank()});
 
-let testUnitDevicesButton = document.createElement('button');
+const testUnitDevicesButton = document.createElement('button');
     testUnitDevicesButton.textContent = 'Test Inputs';
     testUnitDevicesButton.style.margin = '0 1.5em';
     testUnitDevicesButton.addEventListener('click', ()=>{testUnitDevices()});
@@ -560,27 +563,32 @@ function testEnableVFD(){
 conductivity.monitoring = false;
 conductivity.maxValue = 0
 
-async function rinseMedia(){
+function toggle(devices){
+    devices.forEach(device => device.toggle());
+}
+
+function wetMedia(){
     sump.postReq(1);
     fill.postReq(1);
     drain.postReq(1);
+} 
+
+async function rinseMedia(mediaWet){
+    if(conductivity.maxValue < 500 && mediaWet){
+        console.log("Media Rinsed");return
+    }else if(!mediaWet){
+        wetMedia();
+    }
     conductivity.monitor = await watchConductivity();
-    fill.postReq(0);
-    drain.postReq(0);
-    bleed.postReq(0);
-    sump.postReq(0);
-    let watchWLL = await watchFloat(floatObjList[2]);
-    console.log(watchWLL)
-    // sump.postReq(0);
-    // bleed.postReq(0);
-    fill.postReq(1);
-    drain.postReq(1);
+    toggle([fill, drain]);
+    bleed.postReq(1) //drain water
     let watchWOL = await watchFloat(floatObjList[0]);
-    console.log(watchWOL)
-    sump.postReq(1);
-    return 'Continuing rinse'
+    console.log(watchWOL);
+    toggle([fill, drain, bleed]); //fill tank
+    return rinseMedia(true);
 }
 function watchConductivity(){
+    conductivity.maxValue = parseInt(conductivity.feedback.textContent);
     return new Promise((resolve) => {
         function checkConductivity(){
         if(parseInt(conductivity.feedback.textContent) > conductivity.maxValue){
@@ -591,26 +599,27 @@ function watchConductivity(){
             return resolve(`conductivity max: ${conductivity.maxValue}`);
         }
     }
-    let watchdog = setInterval(checkConductivity, 60000);
+    let watchdog = setInterval(checkConductivity, 5 * 60000);
     conductivity.monitoring = true;
     })
 }
 
 function watchFloat(float){
-    float.getStatus();
+    let stat = float.getStatus();
     function checkFloat(float, cb){
-        if(float.feedback.textContent !== float.status){
+        if(float.feedback.textContent !== stat){
             console.log(true)
             return cb();
         }
     }
     return new Promise((resolve) => {
         let watchdog = setInterval(
-            ()=>{checkFloat(float, 
+            ()=>{checkFloat(
+                float, 
                 ()=>{
                     clearInterval(watchdog);
                     resolve(`${float.name} changed`);
-                }
-            )}, 1000)
+                })
+            }, 1000)
     })
 }
