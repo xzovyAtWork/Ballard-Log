@@ -573,13 +573,17 @@ function wetMedia(){
     drain.postReq(1);
 } 
 
-async function rinseMedia(mediaWet){
+async function runWaterTest(mediaWet){
     if(conductivity.maxValue < 500 && mediaWet){
         console.log("Media Rinsed");return
     }else if(!mediaWet){
         wetMedia();
-    }
+    }else{
+        await watchFloat(wol)
+        bleed.postReq(1)
+    };
     conductivity.monitor = await watchConductivity();
+    await rinseMedia(30);
     toggle([fill, drain]);
     bleed.postReq(1) //drain water
     let watchWOL = await watchFloat(floatObjList[0]);
@@ -587,6 +591,13 @@ async function rinseMedia(mediaWet){
     toggle([fill, drain, bleed]); //fill tank
     return rinseMedia(true);
 }
+function rinseMedia(duration){
+    console.log(new Date().toLocaleTimeString(), `rinsing for ${duration} minutes`)
+    return new Promise(resolve => {
+        setTimeout(()=>{resolve('time elapsed')}, duration * 60000)
+    })
+}
+
 function watchConductivity(){
     conductivity.maxValue = parseInt(conductivity.feedback.textContent);
     return new Promise((resolve) => {
@@ -604,7 +615,7 @@ function watchConductivity(){
     })
 }
 
-function watchFloat(float){
+function watchFloat(float, callback){
     let stat = float.getStatus();
     function checkFloat(float, cb){
         if(float.feedback.textContent !== stat){
@@ -617,6 +628,7 @@ function watchFloat(float){
             ()=>{checkFloat(
                 float, 
                 ()=>{
+                    if(callback){callback()};
                     clearInterval(watchdog);
                     resolve(`${float.name} changed`);
                 })
