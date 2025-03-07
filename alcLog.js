@@ -1,5 +1,6 @@
 const realmCount = main.getActionWindow().primitiveRequestRealm.realmCount;
 const wbs = main.getActionWindow().primitiveRequestRealm.wbsId;
+const context = document.getElementsByName('actionContent')[0].contentWindow
     
 const headerObj = {
     "accept": "*/*",
@@ -31,6 +32,7 @@ class Device{
         this.name = name;
         this.status = '';
         this.id = id;
+        this.ctrlid = id + '_ctrlid1';
         if(!undefined){
             if(statusChildNode > 20 ){
                 this.feedback = aContent.querySelector(`#bodyTable > tbody > tr:nth-child(${statusChildNode}) > td:nth-child(3)`).childNodes[0];
@@ -52,6 +54,27 @@ class Device{
         }
     }
     postReq(command = 0){
+        if(this == fill || this == drain){
+            if(command == 0){
+                context.updateDroplist(this.id, this.ctrlid, '0', "Closed", false)
+            }else{
+                context.updateDroplist(this.id, this.ctrlid, '1', "Open", false)
+            }
+        }
+        else if(this == sump || this == bleed){
+            if(command == 0){
+                context.updateDroplist(this.id, this.ctrlid, '0', "Off", false)
+            }else{
+                context.updateDroplist(this.id, this.ctrlid, '1', "On", false)
+            }
+        }
+        else if(this == vfdHOA){
+            if(command == 0){
+                context.updateDroplist(this.id, this.ctrlid, '0', "Disable", false)
+            }else{
+                context.updateDroplist(this.id, this.ctrlid, '1', "Enable", false)
+            }
+        }
         const body = `<MESSAGES channelId=\"publisher\" realmId=\"primitiveRequestRealm\"><MESSAGE messageTypeId=\"reqPrimitiveSubMessage\" consumerId=\"PrimitiveRegistrant\" messageId=\"primitiveMessageSubmit\" priority=\"1\" realmCount="${realmCount}" seqnum=\"13\"><BODY><PRIMITIVE_SUBMIT getFieldValues=\"true\" updateDeferredValues=\"true\" updateActionSet=\"true\" auditlog=\"Edit checkout for i/o points\" auditenabled=\"true\" auditdetails=\"\" cjDoCommit=\"true\" cjGetChangesFromCore=\"true\"><PRIMITIVE id="${this.id}"><![CDATA[${command}]]></PRIMITIVE></PRIMITIVE_SUBMIT></BODY></MESSAGE></MESSAGES>`;
             return fetch(`http://localhost:8080/_common/servlet/lvl5/msgservlet?wbs=${wbs}`, {
                 "headers": headerObj,
