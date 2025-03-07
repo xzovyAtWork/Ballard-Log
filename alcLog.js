@@ -193,7 +193,7 @@ if(saTemp.feedback.textContent == '?'){
             clearInterval(controllerReady);
             fill.postReq(0);
             drain.postReq(1);
-            faceDamper.postReq(20);
+            faceDamper.postReq(100);
             bypassDamper.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
@@ -495,7 +495,7 @@ function testFaceAndBypass(){
     bypassDamper.retrievedValues = [];
     return new Promise((resolve, reject) =>{
     testDamper(bypassDamper, [50, 20, 100]).then(()=>{bypassDamper.tested = true
-        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
+        testDamper(faceDamper, [50, 20, 100]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
     })
   })
 }
