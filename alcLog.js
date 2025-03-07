@@ -589,7 +589,7 @@ async function runWaterTest(mediaWet){
     let watchWOL = await watchFloat(floatObjList[0]);
     console.log(watchWOL);
     toggle([fill, drain, bleed]); //fill tank
-    return rinseMedia(true);
+    return runWaterTest(true);
 }
 function rinseMedia(duration){
     console.log(new Date().toLocaleTimeString(), `rinsing for ${duration} minutes`)
