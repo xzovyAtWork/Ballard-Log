@@ -35,8 +35,9 @@ class Device{
         this.ctrlid = "prim_" + commandStatus + '_ctrlid1';            
         this.feedback = aContent.querySelector(`[primid="prim_${feedbackStatus}"]`);
         if(commandStatus){
+            this.type = 'analog'
             this.command = aContent.querySelector(`[primid="prim_${commandFeedback}"]`);
-        }
+        }else{this.type = 'binary'}
         
     }
     retrievedValues = [];
@@ -107,7 +108,6 @@ class Device{
         return new Promise((resolve, reject) => {
             
             if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious() !== true){
-                device.valueChanged = true;
                 setTimeout(()=>{
                     device.retrievedValues.push(parseFloat(device.feedback.textContent))
                     console.log(device.name,device.retrievedValues);
@@ -141,35 +141,6 @@ class Device{
         this.retrievedValues = [];
     }
 }
-
-
-// populateFanStatusNames();
-// createDevices(fanNames.length, 34, fanObjList, fanNames);
-// createDevices(3, 30, floatObjList, floatNames);
-// const wol = floatObjList[0];
-// const whl= floatObjList[1];
-// const wll = floatObjList[2]
-
-// const face = new Device(8, 'Face Damper', 52,"prim_1975" );
-// const bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
-// const fill = new Device(27, 'Fill', 54, "prim_2061");
-// const drain = new Device(29, 'Drain', 55, "prim_2091");
-// const leak1 = new Device(25, 'MPDC Leak');
-// const leak2 = new Device(26, 'Mech. Gallery Leak Detector');
-// const conductivity = new Device(10, 'Conductivity');
-// const maTemp = new Device(11, 'M/A');
-// const saTemp = new Device(1, 'S/A');
-// const rh1 = new Device(12, 'RH One');
-// const rh2 = new Device(13, 'RH Two');
-// const primary = new Device(42, 'UPS Primary Status')
-// const secondary = new Device(43, 'Secondary Status')
-// const vfd = new Device(16, 'VFD', 46, "prim_1709"); //speed command
-// const vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
-// const vfdFault = new Device(41, 'VFD Fault');
-// const sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
-// const bleed = new Device(56, 'bleed',56 , "prim_2120");
-// const airflow = new Device(15, "airflow", undefined, "prim_722")
-
 
 const wol = new Device("WOL", 1234);
 const whl= new Device("WHL", 1263);
@@ -340,13 +311,6 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
         e.getStatus();
     })
 })()
-
-// function createDevices(quantity = 1, childElement, arr, nameList){
-//     for(let i = 0; i < quantity; i++){
-//         arr[i] = new Device(childElement, nameList[i]);
-//         childElement++
-//     }
-// };
 
 function populateFanStatusNames(){
     for(let i = 0; i < numberOfFans; i++){
