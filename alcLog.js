@@ -121,6 +121,13 @@ class Device{
                 reject('value already recorded')
             } else if(!between(device.feedback.textContent, device.command.textContent, range)){
                 reject('out of range')
+            }
+            if(device == vfd){
+                setTimeout(()=>{
+                     device.retrievedValues.push(parseFloat(device.feedback.textContent)); 
+                     console.log(device.name, device.retrievedValues);
+                     reject('time limit expired')
+                },30000)
             } 
         })
     }
@@ -190,36 +197,39 @@ const analogDeviceList = [bypass, face, vfd];
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
 
-const rampfansButton = document.createElement('button');
+/*UI */{
+
+    const rampfansButton = document.createElement('button');
     rampfansButton.textContent= 'Ramp Fans'
     rampfansButton.addEventListener('click', rampFans)
     aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
-
-const bypassButton = document.createElement('button');
+    
+    const bypassButton = document.createElement('button');
     bypassButton.textContent= 'Run Bypass';
     bypassButton.addEventListener('click', runBypass)
     aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
-
-const fanTimerButton = document.createElement('button');
+    
+    const fanTimerButton = document.createElement('button');
     fanTimerButton.textContent = "Start Fan Timer"
     fanTimerButton.addEventListener('click', ()=>{
-let duration = prompt('How many minutes?',30);
-    duration = parseInt(duration) * 60000;
-    setTimeout(()=>{
-        vfdHOA.postReq(0); console.log('fans stopped at timer');
-        console.log('test duration:', ((new Date() - start)/60000)/60, "hours")
-    }, duration);
-    let time = new Date().toLocaleTimeString();
-    console.log('fan timer started at : ', time)
+        let duration = prompt('How many minutes?',30);
+        duration = parseInt(duration) * 60000;
+        setTimeout(()=>{
+            vfdHOA.postReq(0); console.log('fans stopped at timer');
+            console.log('test duration:', ((new Date() - start)/60000)/60, "hours")
+        }, duration);
+        let time = new Date().toLocaleTimeString();
+        console.log('fan timer started at : ', time)
+        
+    })
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(59) > td.left").append(fanTimerButton)
     
-})
-aContent.querySelector("#bodyTable > tbody > tr:nth-child(59) > td.left").append(fanTimerButton)
-
-const gpmButton = document.createElement('button');
-gpmButton.textContent = "Set GPM"
-gpmButton.addEventListener('click', setGPM)
-aContent.querySelector("#bodyTable > tbody > tr:nth-child(56) > td.left").append(gpmButton)
-
+    const gpmButton = document.createElement('button');
+    gpmButton.textContent = "Set GPM"
+    gpmButton.addEventListener('click', setGPM)
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(56) > td.left").append(gpmButton)
+    
+}
 
 //init commands
 if(saTemp.feedback.textContent == '?'){
@@ -603,9 +613,10 @@ function wetMedia(){
     drain.postReq(1);
 } 
 
-async function runWaterTest(mediaWet){
-    if(conductivity.maxValue < 500 && mediaWet){
-        console.log("Media Rinsed");return
+async function runWaterTest(mediaWet = false){
+    if(conductivity.maxValue < 600 && mediaWet){
+        console.log("Media Rinsed");
+        return;
     }else if(!mediaWet){
         wetMedia();
     }else{
