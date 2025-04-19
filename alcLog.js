@@ -70,7 +70,7 @@ class Device{
                 context.updateDroplist(this.id, this.ctrlid, '1', "Enable", false)
             }
         }
-        else if(this == faceDamper || this == bypassDamper){
+        else if(this == face || this == bypass){
             if(command == 100){context.updateWidgetTextInput(this.id, this.ctrlid, '100', '100')}
             else if (command == 50){context.updateWidgetTextInput(this.id, this.ctrlid, '50', '50')}
             else if (command == 20){context.updateWidgetTextInput(this.id, this.ctrlid, '20', '20')}
@@ -150,7 +150,7 @@ class Device{
 // const whl= floatObjList[1];
 // const wll = floatObjList[2]
 
-// const faceDamper = new Device(8, 'Face Damper', 52,"prim_1975" );
+// const face = new Device(8, 'Face Damper', 52,"prim_1975" );
 // const bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
 // const fill = new Device(27, 'Fill', 54, "prim_2061");
 // const drain = new Device(29, 'Drain', 55, "prim_2091");
@@ -175,11 +175,11 @@ const wol = new Device("WOL", 1234);
 const whl= new Device("WHL", 1263);
 const wll = new Device("WLL", 1292);
 
-const faceDamper = new Device('Face Damper', 414 ,1975, 1964);
-const bypassDamper = new Device ('Bypass Damper',458, 2019, 2008);
+const face = new Device('Face Damper', 414 ,1975, 1964);
+const bypass = new Device ('Bypass Damper',458, 2019, 2008);
 
-const fill = new Device('Fill', 1147, 2061);
-const drain = new Device('Drain', 1205, 2091);
+const fill = new Device('Fill', 1147, 2061, 2052);
+const drain = new Device('Drain', 1205, 2091, 2082);
 
 const leak1 = new Device('MPDC Leak', 1089);
 const leak2 = new Device('Mech. Gallery Leak Detector', 1118);
@@ -214,7 +214,7 @@ const fanObjList = [sf1,sf2,sf3,sf4,sf5,sf6];
 const floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [wol, whl, wll];
 const sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 const binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
-const analogDeviceList = [bypassDamper, faceDamper, vfd];
+const analogDeviceList = [bypass, face, vfd];
 
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
@@ -259,8 +259,8 @@ if(saTemp.feedback.textContent == '?'){
             clearInterval(controllerReady);
             fill.postReq(0);
             drain.postReq(1);
-            faceDamper.postReq(20);
-            bypassDamper.postReq(100);
+            face.postReq(20);
+            bypass.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
             vfd.postReq(0);
@@ -326,16 +326,16 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     sensorList.forEach(e => {e.getStatus()})
     fill.getStatus();
     binaryDeviceList.forEach(e => e.getStatus())
-    faceDamper.getStatus();
-    bypassDamper.getStatus();
+    face.getStatus();
+    bypass.getStatus();
     floatObjList.forEach((e) => {
         e.getStatus();
     })
     fanObjList.forEach((e) => {
         e.getStatus();
     })
-    bypassDamper.getStatus();
-    faceDamper.getStatus();
+    bypass.getStatus();
+    face.getStatus();
     fanObjList.forEach((e) => {
         e.getStatus();
     })
@@ -367,8 +367,8 @@ function pollAnalog(){
 }
 function showSensors(){
     sensorList.forEach(e => {e.getStatus(); console.log(e.name,':' ,e.status)});
-    console.log(faceDamper.name, faceDamper.retrievedValues);
-    console.log(bypassDamper.name, bypassDamper.retrievedValues);
+    console.log(face.name, face.retrievedValues);
+    console.log(bypass.name, bypass.retrievedValues);
 }
 
 function checkFloatPolarity(){
@@ -557,11 +557,11 @@ function testFillAndDrain(){
   )
 }
 function testFaceAndBypass(){
-    faceDamper.retrievedValues = [];
-    bypassDamper.retrievedValues = [];
+    face.retrievedValues = [];
+    bypass.retrievedValues = [];
     return new Promise((resolve, reject) =>{
-    testDamper(bypassDamper, [50, 20, 100]).then(()=>{bypassDamper.tested = true
-        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
+    testDamper(bypass, [50, 20, 100]).then(()=>{bypass.tested = true
+        testDamper(face, [50, 100, 20]).then(()=>{resolve(); face.postReq(20); bypass.postReq(100); face.tested = true;})
     })
   })
 }
