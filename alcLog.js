@@ -26,23 +26,18 @@ function elapsedTime(){
        return `${time * 60} minutes`
     } else {return `${time} hours`}
 }
-
+//aContent.querySelector(`[primid="prim_103"]`)
 class Device{
-    constructor(statusChildNode, name, commandChildNode = undefined, id =''){
+    constructor(name,feedbackStatus ,commandStatus = undefined, commandFeedback){
         this.name = name;
         this.status = '';
-        this.id = id;
-        this.ctrlid = id + '_ctrlid1';
-        if(!undefined){
-            if(statusChildNode > 20 ){
-                this.feedback = aContent.querySelector(`#bodyTable > tbody > tr:nth-child(${statusChildNode}) > td:nth-child(3)`).childNodes[0];
-            } else if(!undefined) {
-                this.feedback = aContent.querySelector(`#bodyTable > tbody > tr:nth-child(${statusChildNode}) > td:nth-child(3) > span.ControlNumberEdit-WidgetTextDisplay-base`)
-            }
-            if(commandChildNode){
-                this.command = aContent.querySelector(`#bodyTable > tbody > tr:nth-child(${commandChildNode}) > td:nth-child(3)`).childNodes[0];
-            }
+        this.id = "prim_" + commandStatus;
+        this.ctrlid = "prim_" + commandStatus + '_ctrlid1';            
+        this.feedback = aContent.querySelector(`[primid="prim_${feedbackStatus}"]`);
+        if(commandStatus){
+            this.command = aContent.querySelector(`[primid="prim_${commandFeedback}"]`);
         }
+        
     }
     retrievedValues = [];
     tested = false;
@@ -74,6 +69,11 @@ class Device{
             }else{
                 context.updateDroplist(this.id, this.ctrlid, '1', "Enable", false)
             }
+        }
+        else if(this == faceDamper || this == bypassDamper){
+            if(command == 100){context.updateWidgetTextInput(this.id, this.ctrlid, '100', '100')}
+            else if (command == 50){context.updateWidgetTextInput(this.id, this.ctrlid, '50', '50')}
+            else if (command == 20){context.updateWidgetTextInput(this.id, this.ctrlid, '20', '20')}
         }
         const body = `<MESSAGES channelId=\"publisher\" realmId=\"primitiveRequestRealm\"><MESSAGE messageTypeId=\"reqPrimitiveSubMessage\" consumerId=\"PrimitiveRegistrant\" messageId=\"primitiveMessageSubmit\" priority=\"1\" realmCount="${realmCount}" seqnum=\"13\"><BODY><PRIMITIVE_SUBMIT getFieldValues=\"true\" updateDeferredValues=\"true\" updateActionSet=\"true\" auditlog=\"Edit checkout for i/o points\" auditenabled=\"true\" auditdetails=\"\" cjDoCommit=\"true\" cjGetChangesFromCore=\"true\"><PRIMITIVE id="${this.id}"><![CDATA[${command}]]></PRIMITIVE></PRIMITIVE_SUBMIT></BODY></MESSAGE></MESSAGES>`;
             return fetch(`http://localhost:8080/_common/servlet/lvl5/msgservlet?wbs=${wbs}`, {
@@ -142,37 +142,80 @@ class Device{
     }
 }
 
-const numberOfFans = 6, fanNames = [], fanObjList = [];
-const floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [];
-populateFanStatusNames();
-createDevices(fanNames.length, 34, fanObjList, fanNames); //34
-createDevices(3, 30, floatObjList, floatNames);
-const wol = floatObjList[0];
-const whl= floatObjList[1];
-const wll = floatObjList[2]
 
-const faceDamper = new Device(8, 'Face Damper', 52,"prim_1975" );
-const bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
-const fill = new Device(27, 'Fill', 54, "prim_2061");
-const drain = new Device(29, 'Drain', 55, "prim_2091");
-const leak1 = new Device(25, 'MPDC Leak');
-const leak2 = new Device(26, 'Mech. Gallery Leak Detector');
-const conductivity = new Device(10, 'Conductivity');
-const maTemp = new Device(11, 'M/A');
-const saTemp = new Device(1, 'S/A');
-const rh1 = new Device(12, 'RH One');
-const rh2 = new Device(13, 'RH Two');
-const primary = new Device(42, 'UPS Primary Status')
-const secondary = new Device(43, 'Secondary Status')
-const vfd = new Device(16, 'VFD', 46, "prim_1709"); //speed command
-const vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
-const vfdFault = new Device(41, 'VFD Fault');
-const sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
-const bleed = new Device(56, 'bleed',56 , "prim_2120");
-const airflow = new Device(15, "airflow", undefined, "prim_722")
+// populateFanStatusNames();
+// createDevices(fanNames.length, 34, fanObjList, fanNames);
+// createDevices(3, 30, floatObjList, floatNames);
+// const wol = floatObjList[0];
+// const whl= floatObjList[1];
+// const wll = floatObjList[2]
+
+// const faceDamper = new Device(8, 'Face Damper', 52,"prim_1975" );
+// const bypassDamper = new Device (9, 'Bypass Damper',53, "prim_2019");
+// const fill = new Device(27, 'Fill', 54, "prim_2061");
+// const drain = new Device(29, 'Drain', 55, "prim_2091");
+// const leak1 = new Device(25, 'MPDC Leak');
+// const leak2 = new Device(26, 'Mech. Gallery Leak Detector');
+// const conductivity = new Device(10, 'Conductivity');
+// const maTemp = new Device(11, 'M/A');
+// const saTemp = new Device(1, 'S/A');
+// const rh1 = new Device(12, 'RH One');
+// const rh2 = new Device(13, 'RH Two');
+// const primary = new Device(42, 'UPS Primary Status')
+// const secondary = new Device(43, 'Secondary Status')
+// const vfd = new Device(16, 'VFD', 46, "prim_1709"); //speed command
+// const vfdHOA = new Device(40, 'VFD HOA', 58, "prim_2178"); // vfd enable
+// const vfdFault = new Device(41, 'VFD Fault');
+// const sump = new Device(33 ,'Pump Status', 57 ,"prim_2149");
+// const bleed = new Device(56, 'bleed',56 , "prim_2120");
+// const airflow = new Device(15, "airflow", undefined, "prim_722")
+
+
+const wol = new Device("WOL", 1234);
+const whl= new Device("WHL", 1263);
+const wll = new Device("WLL", 1292);
+
+const faceDamper = new Device('Face Damper', 414 ,1975, 1964);
+const bypassDamper = new Device ('Bypass Damper',458, 2019, 2008);
+
+const fill = new Device('Fill', 1147, 2061);
+const drain = new Device('Drain', 1205, 2091);
+
+const leak1 = new Device('MPDC Leak', 1089);
+const leak2 = new Device('Mech. Gallery Leak Detector', 1118);
+
+const conductivity = new Device('Conductivity', 502);
+
+const maTemp = new Device('M/A', 546);
+const saTemp = new Device('S/A', 103);
+const rh1 = new Device('RH One', 590);
+const rh2 = new Device('RH Two', 634);
+
+const primary = new Device('UPS Primary Status', 1582)
+const secondary = new Device('Secondary Status', 1611)
+
+const vfd = new Device('VFD', 766, 1709, 1698); //speed command
+const vfdHOA = new Device('VFD HOA', 1524, 2178); // vfd enable
+const vfdFault = new Device('VFD Fault', 1553);
+
+const sump = new Device('Pump Status', 1321 ,2149);
+const bleed = new Device('bleed',2111 , 2120);
+
+const airflow = new Device("airflow", 722)
+
+const sf1= new Device('sf1', 1350);
+const sf2= new Device('sf2', 1379);
+const sf3= new Device('sf3', 1408);
+const sf4= new Device('sf4', 1437);
+const sf5= new Device('sf5', 1466);
+const sf6= new Device('sf6', 1495);
+
+const fanObjList = [sf1,sf2,sf3,sf4,sf5,sf6];
+const floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [wol, whl, wll];
 const sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 const binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
 const analogDeviceList = [bypassDamper, faceDamper, vfd];
+
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
 
@@ -298,12 +341,12 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     })
 })()
 
-function createDevices(quantity = 1, childElement, arr, nameList){
-    for(let i = 0; i < quantity; i++){
-        arr[i] = new Device(childElement, nameList[i]);
-        childElement++
-    }
-};
+// function createDevices(quantity = 1, childElement, arr, nameList){
+//     for(let i = 0; i < quantity; i++){
+//         arr[i] = new Device(childElement, nameList[i]);
+//         childElement++
+//     }
+// };
 
 function populateFanStatusNames(){
     for(let i = 0; i < numberOfFans; i++){
