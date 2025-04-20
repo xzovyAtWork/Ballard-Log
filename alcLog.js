@@ -173,11 +173,11 @@ const primary = new Device('UPS Primary Status', 1582)
 const secondary = new Device('Secondary Status', 1611)
 
 const vfd = new Device('VFD', 766, 1709, 1698); //speed command
-const vfdHOA = new Device('VFD HOA', 1524, 2178); // vfd enable
+const vfdHOA = new Device('VFD HOA', 1524, 2178, 2169); // vfd enable
 const vfdFault = new Device('VFD Fault', 1553);
 
-const sump = new Device('Pump Status', 1321 ,2149);
-const bleed = new Device('bleed',2111 , 2120);
+const sump = new Device('Pump Status', 1321 ,2149, 2140);
+const bleed = new Device('bleed',undefined , 2120, 2111);
 
 const airflow = new Device("airflow", 722)
 
