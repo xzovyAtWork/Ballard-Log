@@ -249,6 +249,11 @@ if(saTemp.feedback.textContent == '?'){
     },1000)
 }   
 
+
+function acceptIsVisible(){
+    if(document.querySelector("#MainBarTR > td.actionSection.fill-horz.barBg").children[1].style.display == 'inline'){handleAcceptButton()}   
+}
+let autoAccept = setInterval(acceptIsVisible, 2000);
 console.log('helper functions: setGPM(), runBypass(), flushTank(), showSensors(), incrementFans()')
 
 startBinaryPoll = setInterval(() => {
