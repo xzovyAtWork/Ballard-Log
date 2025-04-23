@@ -274,11 +274,6 @@ startFloatsPoll = setInterval(() => {
 
 aContent.querySelector("#scrollContent > div > span").style.display = 'none'
 
-const acceptButtonLow = document.createElement('button');
-    acceptButtonLow.textContent = 'Accept';
-    acceptButtonLow.style.margin = '0 1.5em';
-    acceptButtonLow.addEventListener('click', () => { handleAcceptButton()});
-
 const testDampersButton = document.createElement('button');
     testDampersButton.textContent = 'Test Dampers';
     testDampersButton.style.margin = '0 1.5em';
