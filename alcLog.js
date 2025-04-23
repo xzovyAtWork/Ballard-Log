@@ -18,6 +18,7 @@ const aContent = document.querySelector('.actionFrame').contentWindow.document.c
 let lastPushed;
 
 const start= new Date();
+let testType = ''
 const startTime = start.toLocaleTimeString();
 const end = new Date(start.getTime()+(4* (60 * 60000)))
 function elapsedTime(){
@@ -27,7 +28,7 @@ function elapsedTime(){
     } else {return `${time} hours`}
 }
 //aContent.querySelector(`[primid="prim_103"]`)
-class Device{
+ class Device{
     constructor(name,feedbackStatus ,commandStatus = undefined, commandFeedback){
         this.name = name;
         this.status = '';
@@ -71,7 +72,7 @@ class Device{
                 context.updateDroplist(this.id, this.ctrlid, '1', "Enable", false)
             }
         }
-        else if(this == face || this == bypass){
+        else if(this == faceDamper || this == bypassDamper){
             if(command == 100){context.updateWidgetTextInput(this.id, this.ctrlid, '100', '100')}
             else if (command == 50){context.updateWidgetTextInput(this.id, this.ctrlid, '50', '50')}
             else if (command == 20){context.updateWidgetTextInput(this.id, this.ctrlid, '20', '20')}
@@ -97,6 +98,11 @@ class Device{
         })
         return validity
     }
+    logFbk = () => {
+        this.retrievedValues.push(parseFloat(this.feedback.textContent))
+        return this.retrievedValues;
+    }
+    getFbk = () => parseFloat(this.feedback.textContent)
     getBinary(){
         if(this.status !== this.feedback.textContent){
             this.status = this.feedback.textContent
@@ -106,15 +112,16 @@ class Device{
     getAnalog(delay = 4000, range){
         let device = this;
         return new Promise((resolve, reject) => {
-            
-            if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious() !== true){
-                setTimeout(()=>{
+            let timer1, timer2
+            if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious()){
+                console.log('timer 1 started')
+                timer1 = setTimeout(()=>{
                     device.retrievedValues.push(parseFloat(device.feedback.textContent))
                     console.log(device.name,device.retrievedValues);
-                    lastPushed = device;
                     if(device.name == 'VFD'){
                         console.log("airflow:",airflow.feedback.textContent)
                     }
+                    clearTimeout(timer1)
                     resolve(`${device.name} ${device.retrievedValues}`);
                 }, delay)
             } else if(device.checkPrevious() == true){
@@ -122,13 +129,6 @@ class Device{
             } else if(!between(device.feedback.textContent, device.command.textContent, range)){
                 reject('out of range')
             }
-            if(device == vfd){
-                setTimeout(()=>{
-                     device.retrievedValues.push(parseFloat(device.feedback.textContent)); 
-                     console.log(device.name, device.retrievedValues);
-                     reject('time limit expired')
-                },30000)
-            } 
         })
     }
     checkFault(){
@@ -153,8 +153,8 @@ const wol = new Device("WOL", 1234);
 const whl= new Device("WHL", 1263);
 const wll = new Device("WLL", 1292);
 
-const face = new Device('Face Damper', 414 ,1975, 1964);
-const bypass = new Device ('Bypass Damper',458, 2019, 2008);
+const faceDamper = new Device('Face Damper', 414 ,1975, 1964);
+const bypassDamper = new Device ('Bypass Damper',458, 2019, 2008);
 
 const fill = new Device('Fill', 1147, 2061, 2052);
 const drain = new Device('Drain', 1205, 2091, 2082);
@@ -192,7 +192,7 @@ const fanObjList = [sf1,sf2,sf3,sf4,sf5,sf6];
 const floatNames = ['WOL', 'WHL', 'WLL'], floatObjList = [wol, whl, wll];
 const sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
 const binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
-const analogDeviceList = [bypass, face, vfd];
+const analogDeviceList = [bypassDamper, faceDamper, vfd];
 
 let startBinaryPoll, startAnalogPoll;
 let controllerReady;
@@ -204,10 +204,10 @@ let controllerReady;
     rampfansButton.addEventListener('click', rampFans)
     aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
     
-    const bypassButton = document.createElement('button');
-    bypassButton.textContent= 'Run Bypass';
-    bypassButton.addEventListener('click', runBypass)
-    aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassButton)
+    const bypassDamperButton = document.createElement('button');
+    bypassDamperButton.textContent= 'Run Bypass';
+    bypassDamperButton.addEventListener('click', runBypass)
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassDamperButton)
     
     const fanTimerButton = document.createElement('button');
     fanTimerButton.textContent = "Start Fan Timer"
@@ -240,8 +240,8 @@ if(saTemp.feedback.textContent == '?'){
             clearInterval(controllerReady);
             fill.postReq(0);
             drain.postReq(1);
-            face.postReq(20);
-            bypass.postReq(100);
+            faceDamper.postReq(20);
+            bypassDamper.postReq(100);
             sump.postReq(0);
             vfdHOA.postReq(0);
             vfd.postReq(0);
@@ -307,26 +307,21 @@ if(aContent.querySelector('#scrollContent > div').children.length < 2){
     sensorList.forEach(e => {e.getStatus()})
     fill.getStatus();
     binaryDeviceList.forEach(e => e.getStatus())
-    face.getStatus();
-    bypass.getStatus();
+    faceDamper.getStatus();
+    bypassDamper.getStatus();
     floatObjList.forEach((e) => {
         e.getStatus();
     })
     fanObjList.forEach((e) => {
         e.getStatus();
     })
-    bypass.getStatus();
-    face.getStatus();
+    bypassDamper.getStatus();
+    faceDamper.getStatus();
     fanObjList.forEach((e) => {
         e.getStatus();
     })
 })()
 
-function populateFanStatusNames(){
-    for(let i = 0; i < numberOfFans; i++){
-        fanNames[i] = `SF${i + 1} status`;
-    }
-};
 function between(num, target, range = 2){
     num = parseFloat(num);
     target = parseFloat(target);
@@ -336,16 +331,13 @@ function pollSensors(){
     sensorList.forEach(e => e.checkFault())
 }
 
-function pollAnalog(){
-    vfd.getAnalog()
-}
 function showSensors(){
     sensorList.forEach(e => {e.getStatus(); console.log(e.name,':' ,e.status)});
-    console.log(face.name, face.retrievedValues);
-    console.log(bypass.name, bypass.retrievedValues);
+    console.log(faceDamper.name, faceDamper.retrievedValues);
+    console.log(bypassDamper.name, bypassDamper.retrievedValues);
 }
 
-function checkFloatPolarity(){
+ function checkFloatPolarity(){
     if(floatObjList[0].feedback.textContent == 'Normal'){
         console.log('WOL FLOAT SWITCH UPSIDE DOWN!')
     }
@@ -355,17 +347,19 @@ function checkFloatPolarity(){
     if(floatObjList[2].feedback.textContent == 'Low'){
         console.log('WLL FLOAT SWITCH UPSIDE DOWN!')
     }else{
-        console.log('Float switches in correct orientation if tank is empty.')
+        console.log('Float switches in CORRECT orientation if tank is empty.')
     }
     
 }
-function drainTank(){
+ function drainTank(){
     sump.postReq(1);
     bleed.postReq(1);
     drain.postReq(0);
-    console.log('Draining sump tank. Turn off main water supply');
-    evapTankButton.textContent = 'Fill Tank';
-    evapTankButton.addEventListener('click',()=>{fillTank()});
+    if(testType="bypass"){
+        console.log('Draining sump tank. Turn off main water supply');
+        evapTankButton.textContent = 'Fill Tank';
+        evapTankButton.addEventListener('click',()=>{fillTank()});
+    }
 
     let watchdog = setInterval(()=>{
         if(floatObjList[2].feedback.textContent == 'Normal'){
@@ -374,7 +368,7 @@ function drainTank(){
                 bleed.postReq(0)
         }}, 1000)
 }
-function flushTank(){
+ function flushTank(){
     fill.postReq(0);
     drain.postReq(0);
     bleed.postReq(1);
@@ -397,29 +391,34 @@ function flushTank(){
         }
     }, 1000)
 }
-function fillTank(){
+ function fillTank(){
     drain.postReq(1);
     fill.postReq(1);
     console.log('filling tank...')
-    evapTankButton.textContent = 'Drain Tank';
-    evapTankButton.addEventListener('click',()=>{drainTank()});
+    if(testType=='bypass'){
+
+        evapTankButton.textContent = 'Drain Tank';
+        evapTankButton.addEventListener('click',()=>{drainTank()});
+    }
 }
-function runBypass(){
-    console.log("bypass timer started at:", new Date().toLocaleString())
+
+ function runBypass(){
+    testType="bypass";
+    console.log("bypassDamper timer started at:", new Date().toLocaleString())
     // fill.postReq(0)
 return setTimeout(()=>{
         drain.postReq(0);
         sump.postReq(0);
-        console.log("bypass test finished. draining tank. Turn off main water supply")
+        console.log("bypassDamper test finished. draining tank. Turn off main water supply")
     }, 30 * 60000)
 }
-function setGPM(){
+ function setGPM(){
     bleed.postReq(1);
     sump.postReq(1);
     console.log('running bleed for 5 minutes...')
 return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 5 * 60000);
 }
-function strokeAnalogDevice(device, withOutput = false, commandValue){
+ function strokeAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
         let loggedStatus = parseFloat(device.feedback.textContent);
         if(withOutput){
@@ -450,7 +449,7 @@ function strokeAnalogDevice(device, withOutput = false, commandValue){
             }, withOutput ? 3500 : 1000); 
     })
 }
-function strokeBinaryDevice(device, withOutput = false){
+ function strokeBinaryDevice(device, withOutput = false){
     return new Promise(function(resolve, reject){
     if(withOutput && (device.feedback.textContent == device.command.textContent)){
         device.toggle();
@@ -473,7 +472,7 @@ function strokeBinaryDevice(device, withOutput = false){
     }, withOutput ? 3500 : 0);   
 })
 }
-let testBinaryDevice = function(device, withOutput){
+ let testBinaryDevice = function(device, withOutput){
     return new Promise((resolve, reject) => {
         strokeBinaryDevice(device, withOutput).then(()=>{
             strokeBinaryDevice(device, withOutput).then(()=>{
@@ -482,7 +481,7 @@ let testBinaryDevice = function(device, withOutput){
         })
     })
 }
-function testDamper(device, commandValues){
+ function testDamper(device, commandValues){
     return new Promise((resolve, reject) =>{
         let tested = resolve;
         device.getAnalog(0, 5); 
@@ -498,7 +497,7 @@ function testDamper(device, commandValues){
         }).catch(reject)
     })
 }
-function testVFD(device, commandValues){
+ function testVFD(device, commandValues){
     device.retrievedValues = [];
     vfdHOA.postReq(1);
     return new Promise((resolve, reject) =>{
@@ -518,7 +517,7 @@ function testVFD(device, commandValues){
         }).catch(reject)
     })
 }
-function testFillAndDrain(){
+ function testFillAndDrain(){
     return new Promise((resolve, reject) =>{
     testBinaryDevice(fill, true).then(()=>{
         fill.tested = true;
@@ -530,16 +529,16 @@ function testFillAndDrain(){
    }
   )
 }
-function testFaceAndBypass(){
-    face.retrievedValues = [];
-    bypass.retrievedValues = [];
+ function testFaceAndBypass(){
+    faceDamper.retrievedValues = [];
+    bypassDamper.retrievedValues = [];
     return new Promise((resolve, reject) =>{
-    testDamper(bypass, [50, 20, 100]).then(()=>{bypass.tested = true
-        testDamper(face, [50, 100, 20]).then(()=>{resolve(); face.postReq(20); bypass.postReq(100); face.tested = true;})
+    testDamper(bypassDamper, [50, 20, 100]).then(()=>{bypassDamper.tested = true
+        testDamper(faceDamper, [50, 100, 20]).then(()=>{resolve(); faceDamper.postReq(20); bypassDamper.postReq(100); faceDamper.tested = true;})
     })
   })
 }
-function testFloats(){
+ function testFloats(){
     checkFloatPolarity();
     clearInterval(startFloatsPoll);
     return new Promise((resolve)=>{
@@ -560,7 +559,7 @@ function testFloats(){
         })
     })
 }
-    function testUnitDevices(){
+ function testUnitDevices(){
 
         let arr = [strokeAnalogDevice(maTemp), strokeAnalogDevice(rh1), strokeAnalogDevice(rh2), testFloats()]
 
@@ -569,7 +568,6 @@ function testFloats(){
         }else{
             console.log('skipping S/A temp')
         }
-        console.log("Binary Inputs Logging Stopped...")
 
         Promise.all(arr).then(()=>{
             console.log('Unit inputs test complete. Logging Binary Inputs...')
@@ -577,13 +575,13 @@ function testFloats(){
         })
     }
 
-function rampFans(){
+     function rampFans(){
     testEnableVFD().then((r)=>{
         console.log(r);
         return setTimeout(()=>{testVFD(vfd, [25,50,75,100])}, 5000);
     })
 }
-function testEnableVFD(){
+ function testEnableVFD(){
     return new Promise((resolve, reject)=>{
         
         vfdHOA.postReq(0);
@@ -602,44 +600,60 @@ function testEnableVFD(){
 
 conductivity.monitoring = false;
 conductivity.maxValue = 0
+let fullWaterStartTime;
+let cycleCount = 0
 
-function toggle(devices){
+ function toggle(devices){
     devices.forEach(device => device.toggle());
 }
 
-function wetMedia(){
+ async function wetMedia(){
     sump.postReq(1);
     fill.postReq(1);
     drain.postReq(1);
+    await mediaTimer(20)
 } 
 
-async function runWaterTest(mediaWet = false){
-    if(conductivity.maxValue < 600 && mediaWet){
+ async function rinseMedia(mediaWet = false){
+     if(conductivity.maxValue < 600 && mediaWet){
         console.log("Media Rinsed");
         return;
     }else if(!mediaWet){
+        testType="fullWater"
+        fullWaterStartTime = new Date().toLocaleTimeString();
         wetMedia();
     }else{
-        await watchFloat(wol)
-        bleed.postReq(1)
+        await watchFloat(wol);
+        bleed.postReq(1);
     };
+    if(cycleCount==0){
+        console.log('commanding fans to 40%..');
+        vfdHOA.postReq(1);
+        vfd.postReq(40);
+    }
+    await mediaTimer(30);
     conductivity.monitor = await watchConductivity();
-    await rinseMedia(30);
-    toggle([fill, drain]);
-    bleed.postReq(1) //drain water
-    let watchWOL = await watchFloat(floatObjList[0]);
+    cycleCount += 1;
+    console.log(`cycle ${cycleCount} complete`);
+    
+    if(cycleCount > 2){
+
+        if(confirm('begin carryover?')){return vfd.postReq(86)}
+    }
+    drainTank();
+    let watchWOL = await watchFloat(wol, fillTank);
     console.log(watchWOL);
-    toggle([fill, drain, bleed]); //fill tank
-    return runWaterTest(true);
+    return rinseMedia(true);
 }
-function rinseMedia(duration){
+
+ function mediaTimer(duration){
     console.log(new Date().toLocaleTimeString(), `rinsing for ${duration} minutes`)
     return new Promise(resolve => {
         setTimeout(()=>{resolve('time elapsed')}, duration * 60000)
     })
 }
 
-function watchConductivity(){
+ function watchConductivity(){
     conductivity.maxValue = parseInt(conductivity.feedback.textContent);
     return new Promise((resolve) => {
         function checkConductivity(){
@@ -651,12 +665,12 @@ function watchConductivity(){
             return resolve(`conductivity max: ${conductivity.maxValue}`);
         }
     }
-    let watchdog = setInterval(checkConductivity, 5 * 60000);
+    let watchdog = setInterval(checkConductivity, 1 * 60000);
     conductivity.monitoring = true;
     })
 }
 
-function watchFloat(float, callback){
+ function watchFloat(float, callback){
     let stat = float.getStatus();
     function checkFloat(float, cb){
         if(float.feedback.textContent !== stat){
