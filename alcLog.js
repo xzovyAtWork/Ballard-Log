@@ -109,19 +109,16 @@ function elapsedTime(){
             console.log(`${this.name} is ${this.status}`)
         }
     }
-    getAnalog(delay = 4000, range){
+    getAnalog(delay = 0, range){
         let device = this;
         return new Promise((resolve, reject) => {
-            let timer1, timer2
-            if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious()){
-                console.log('timer 1 started')
-                timer1 = setTimeout(()=>{
-                    device.retrievedValues.push(parseFloat(device.feedback.textContent))
+            if(between(device.feedback.textContent, device.command.textContent, range) && !device.checkPrevious()){
+                device.retrievedValues.push(parseFloat(device.feedback.textContent))
+                setTimeout(()=>{
                     console.log(device.name,device.retrievedValues);
                     if(device.name == 'VFD'){
                         console.log("airflow:",airflow.feedback.textContent)
                     }
-                    clearTimeout(timer1)
                     resolve(`${device.name} ${device.retrievedValues}`);
                 }, delay)
             } else if(device.checkPrevious() == true){
@@ -253,7 +250,16 @@ if(saTemp.feedback.textContent == '?'){
 function acceptIsVisible(){
     if(document.querySelector("#MainBarTR > td.actionSection.fill-horz.barBg").children[1].style.display == 'inline'){handleAcceptButton()}   
 }
-let autoAccept = setInterval(acceptIsVisible, 2000);
+// let autoAccept = setInterval(acceptIsVisible, 751);
+setUpObserver();
+function setUpObserver(){
+    let acceptNode = document.querySelector("#MainBarTR > td.actionSection.fill-horz.barBg").children[1];
+    let cb = () => handleAcceptButton();
+    let autoAccept = new MutationObserver(cb);
+    let config = { attributes: true, childList: true, subtree: true };
+    autoAccept.observe(acceptNode, config)
+}
+
 console.log('helper functions: setGPM(), runBypass(), flushTank(), showSensors(), incrementFans()')
 
 startBinaryPoll = setInterval(() => {
@@ -280,25 +286,21 @@ const testDampersButton = document.createElement('button');
     testDampersButton.addEventListener('click', ()=>{testFaceAndBypass();});
 
 const testFillDrainButton = document.createElement('button');
-    testFillDrainButton.textContent = 'Test Fill/Drain';
+    testFillDrainButton.textContent = 'Test Fill/Drain & Inputs';
     testFillDrainButton.style.margin = '0 1.5em';
-    testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain()});
+    testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain(); testUnitDevices();});
 
 const evapTankButton = document.createElement('button');
     evapTankButton.style.margin = '0 1.5em';
     evapTankButton.textContent = 'Fill Tank';
     evapTankButton.addEventListener('click',()=>{fillTank()});
 
-const testUnitDevicesButton = document.createElement('button');
-    testUnitDevicesButton.textContent = 'Test Inputs';
-    testUnitDevicesButton.style.margin = '0 1.5em';
-    testUnitDevicesButton.addEventListener('click', ()=>{testUnitDevices()});
+
 
 if(aContent.querySelector('#scrollContent > div').children.length < 2){
     aContent.querySelector("#scrollContent > div").append(testDampersButton);
     aContent.querySelector("#scrollContent > div").append(testFillDrainButton);
-    aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
-    aContent.querySelector("#scrollContent > div").append(acceptButtonLow);
+    // aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
     aContent.querySelector("#scrollContent > div").append(evapTankButton);
 }
 
@@ -352,21 +354,26 @@ function showSensors(){
     
 }
  function drainTank(){
+    return new Promise(resolve => {
     sump.postReq(1);
     bleed.postReq(1);
     drain.postReq(0);
-    if(testType="bypass"){
+    if(testType=="bypass"){
         console.log('Draining sump tank. Turn off main water supply');
         evapTankButton.textContent = 'Fill Tank';
         evapTankButton.addEventListener('click',()=>{fillTank()});
+    }else{
+        fill.postReq(0);
     }
 
     let watchdog = setInterval(()=>{
         if(floatObjList[2].feedback.textContent == 'Normal'){
             clearInterval(watchdog);
+                resolve();
                 sump.postReq(0);
                 bleed.postReq(0)
         }}, 1000)
+    })
 }
  function flushTank(){
     fill.postReq(0);
@@ -395,11 +402,6 @@ function showSensors(){
     drain.postReq(1);
     fill.postReq(1);
     console.log('filling tank...')
-    if(testType=='bypass'){
-
-        evapTankButton.textContent = 'Drain Tank';
-        evapTankButton.addEventListener('click',()=>{drainTank()});
-    }
 }
 
  function runBypass(){
@@ -412,12 +414,14 @@ return setTimeout(()=>{
         console.log("bypassDamper test finished. draining tank. Turn off main water supply")
     }, 30 * 60000)
 }
- function setGPM(){
+
+function setGPM(){
     bleed.postReq(1);
     sump.postReq(1);
     console.log('running bleed for 5 minutes...')
-return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 5 * 60000);
+    return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 5 * 60000);
 }
+
  function strokeAnalogDevice(device, withOutput = false, commandValue){
     return new Promise(function(resolve, reject){
         let loggedStatus = parseFloat(device.feedback.textContent);
@@ -576,12 +580,12 @@ return setTimeout(()=>{bleed.postReq(); console.log("bleed off")}, 5 * 60000);
     }
 
      function rampFans(){
-    testEnableVFD().then((r)=>{
+    testVfdEnable().then((r)=>{
         console.log(r);
         return setTimeout(()=>{testVFD(vfd, [25,50,75,100])}, 5000);
     })
 }
- function testEnableVFD(){
+ function testVfdEnable(){
     return new Promise((resolve, reject)=>{
         
         vfdHOA.postReq(0);
@@ -603,7 +607,7 @@ conductivity.maxValue = 0
 let fullWaterStartTime;
 let cycleCount = 0
 
- function toggle(devices){
+ function toggleDevices(devices){
     devices.forEach(device => device.toggle());
 }
 
@@ -611,13 +615,14 @@ let cycleCount = 0
     sump.postReq(1);
     fill.postReq(1);
     drain.postReq(1);
-    await mediaTimer(20)
 } 
 
  async function rinseMedia(mediaWet = false){
+    console.log(`cycle ${cycleCount + 1} started`)
      if(conductivity.maxValue < 600 && mediaWet){
+        // conductivity.monitor = await watchConductivity();
         console.log("Media Rinsed");
-        return;
+        if( confirm("Begin Carryover test? Click cancel to keep rinsing") ) {return vfd.postReq(86); console.log('fans commanded to 86%') }
     }else if(!mediaWet){
         testType="fullWater"
         fullWaterStartTime = new Date().toLocaleTimeString();
@@ -631,18 +636,22 @@ let cycleCount = 0
         vfdHOA.postReq(1);
         vfd.postReq(40);
     }
-    await mediaTimer(30);
     conductivity.monitor = await watchConductivity();
+    if(conductivity.maxValue > 900){bleed.postReq(1)};
+    await mediaTimer(5);
     cycleCount += 1;
     console.log(`cycle ${cycleCount} complete`);
     
     if(cycleCount > 2){
-
-        if(confirm('begin carryover?')){return vfd.postReq(86)}
+        let beginCarryover= confirm('begin carryover?')
+        if(beginCarryover){return vfd.postReq(86)}
+        else{return rinseMedia(true)}
     }
-    drainTank();
-    let watchWOL = await watchFloat(wol, fillTank);
-    console.log(watchWOL);
+    await drainTank();
+    fillTank();
+    watchFloat(wol, ()=>toggleDevices([sump, bleed]))
+    // let watchWOL = await watchFloat(wol, fillTank);
+    // console.log(watchWOL);
     return rinseMedia(true);
 }
 
