@@ -509,6 +509,11 @@ function testFaceAndBypass(){
     testAnalogIO(bypassDamper, [50,20,100]).then(()=>testAnalogIO(faceDamper, [50,100,20]))
 }
 
+function testVFD(){
+    vfd.postReq(1);
+    vfd.getAnalog().then(()=>testAnalogIO(vfd, [25,50,75,100]));
+}
+
 function testUnitDevices(){
 
     let arr = [strokeAnalogDevice(maTemp), strokeAnalogDevice(rh1), strokeAnalogDevice(rh2), testFloats()]
@@ -528,8 +533,8 @@ function testUnitDevices(){
 function rampFans(){
     testVfdEnable().then((r)=>{
         console.log(r);
-        return setTimeout(()=>{testVFD(vfd, [25,50,75,100])}, 5000);
-    })
+        
+    }).then(getAnalog).then(()=>testAnalogIO(vfd, [25,50,75,100]))
 }
  function testVfdEnable(){
     return new Promise((resolve, reject)=>{
