@@ -354,15 +354,12 @@ async function flushTank(){
     console.log('flushing tank')
     fill.postReq(0);
     drain.postReq(0);
-    bleed.postReq(0);
-    sump.postReq(0);
-    // await watchFloat(wll, ()=>{
-    //     toggleDevices([sump, bleed]);
-    // })
-    await watchFloat(wll)
-    return new Promise(resolve => {
+    await watchFloat(wol, ()=>{sump.postReq(0); bleed.postReq(0)})
+    await watchFloat(wll, ()=> {
         console.log('tank flushed')
-        resolve();
+    })
+    return new Promise(resolve => {
+        resolve('tank flushed');
     })
 }
 async function wetMedia(withBleed = false){
