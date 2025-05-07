@@ -472,6 +472,18 @@ function strokeBinaryDevice(device, withOutput = false){
     })
 }
 
+function testFillAndDrain(){
+    return new Promise((resolve, reject) =>{
+    testBinaryDevice(fill, true).then(()=>{
+        fill.tested = true;
+        testBinaryDevice(drain, true).then(()=>{
+            drain.tested = true;
+            resolve('Fill and Drain actuators test complete')
+        })
+    })
+   }
+  )
+}
  
  function testFloats(){
     checkFloatPolarity();
