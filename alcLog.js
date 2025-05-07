@@ -114,10 +114,10 @@ function elapsedTime(){
         }
     }
 
-    getAnalog(range){
+    getAnalog(range = 5){
         let device = this;
         return new Promise((resolve, reject) => {
-            if(between(device.feedback.textContent, device.command.textContent, range) && !device.checkPrevious()){
+            if(between(device.feedback.textContent, device.command.textContent, range) && device.checkPrevious() == false){
                 device.retrievedValues.push(parseFloat(device.feedback.textContent))
                     console.log(device.name,device.retrievedValues);
                     if(device.name == 'VFD'){
@@ -126,7 +126,7 @@ function elapsedTime(){
                    return resolve(`${device.name} ${device.retrievedValues}`);
             } else if(device.checkPrevious() == true){
                return reject('value already recorded')
-            } else if(!between(device.feedback.textContent, device.command.textContent, range)){
+            } else if(between(device.feedback.textContent, device.command.textContent, range) === false){
                return reject('out of range')
             }
         })
@@ -509,9 +509,10 @@ function testFaceAndBypass(){
     testAnalogIO(bypassDamper, [50,20,100]).then(()=>testAnalogIO(faceDamper, [50,100,20]))
 }
 
-function testVFD(){
-    vfd.postReq(1);
-    vfd.getAnalog().then(()=>testAnalogIO(vfd, [25,50,75,100]));
+async function testVFD(){
+    vfd.postReq(0);
+    vfdHOA.postReq(1)
+    testAnalogIO(vfd, [0, 25,50,75,100]);
 }
 
 function testUnitDevices(){
@@ -533,8 +534,7 @@ function testUnitDevices(){
 function rampFans(){
     testVfdEnable().then((r)=>{
         console.log(r);
-        
-    }).then(getAnalog).then(()=>testAnalogIO(vfd, [25,50,75,100]))
+    }).then(()=>vfd.postReq(0)).then(testVFD)
 }
  function testVfdEnable(){
     return new Promise((resolve, reject)=>{
@@ -543,10 +543,8 @@ function rampFans(){
         setTimeout(()=>{
             if (parseFloat(vfd.feedback.textContent) > 2){
                reject('VFD Enable not working')
-                vfd.postReq(0);
             }else{
                resolve('VFD Enable working, Ramping Fans..');
-                vfd.postReq(0);
             }
         }, 7000)
     })
