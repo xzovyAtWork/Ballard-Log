@@ -1,0 +1,23 @@
+{
+  "name": "ballard-log",
+  "version": "1.0.0",
+  "description": "The Hitchhikers Guide to Testing ALC Ballard\r 1)\tRun Windows PowerShell as Admin\r a.\tWindows button + R then  type in PowerShell, then ctrl + shift + enter \r b.\t Start menu -> search Powershell -> ‘Run as Administrator’\r 2)\tCopy-pasta:  netsh interface ipv4 set address name=”Ethernet” static 169.254.1.2\r a.\tHit enter. PowerShell is persistent on exiting and restarting the computer. From now on open powershell as admin hit the up arrow on your keyboard and it will cycle through your past commands. Neat!\r b.\tIf you want to change your ip address, hit the up arrow and replace the ip address from 169.254.1.2 to whatever you like. \r 3)\tGo through the usual procedure at 169.254.1.1\r 4)\tChange ip address to 192.168.168.128 from powershell. You only need manually change this once, from then on just cycle up with the up arrow key and you’ll see your previous entries. \r 5)\tWith webCTRL server running, open your browser of choice. And login to localhost:8080 then go to the properties -> I/O points tab\r 6)\tOpen dev tools (ctrl + shift + i) and go to the ‘Console Tab’\r a.\tWhen in doubt google “how to open dev tools in Chrome” etc.\r 7)\tAdd ‘live-expressions’ (eye icon) to the dev tools console:\r a.\tbypassDamper.feedback.textContent\r b.\tfaceDamper.feedback.textContent\r c.\tconductivity.feedback.textContent\r d.\tvfd.feedback.textContent\r 8)\tPaste in your hacker code in the console. Most updated version found at: https://github.com/xzovyAtWork/Ballard-Log/blob/main/alcLog.js\r a.\tIf its your first time, after trying to load the code in, you’ll have to type in ‘allow pasting’ then try again. \r b.\tIf you click on another tab for what ever reason , the code wont work and you’ll have to put it in to console again. \r i.\tNote that Dev tools console is persistent as well , so in the future just go to the console and hit the up arrow to add the code again.",
+  "homepage": "https://github.com/xzovyAtWork/Ballard-Log#readme",
+  "bugs": {
+    "url": "https://github.com/xzovyAtWork/Ballard-Log/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xzovyAtWork/Ballard-Log.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "alcLog.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "jest": "^29.7.0"
+  }
+}
