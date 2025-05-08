@@ -362,11 +362,10 @@ async function flushTank(){
         resolve('tank flushed');
     })
 }
-async function wetMedia(withBleed = false){
+async function wetMedia(){
     sump.postReq(1);
     fill.postReq(1);
-    drain.postReq(1);
-    if(withBleed){bleed.postReq(1)}
+    drain.postReq(1); 
     return new Promise(resolve => resolve())
 } 
 
@@ -383,7 +382,10 @@ async function cycle(duration, withBleed = false, fanSpeed){
             vfdHOA.postReq(1);
             vfd.postReq(fanSpeed);
         })
-        .then(()=>wetMedia(withBleed))
+        .then(wetMedia)
+        .then(()=>{if(withBleed){
+            watchFloat(wol, ()=>{bleed.postReq(1)});    
+        }})
         .then(()=>mediaTimer(duration))
         .then(flushTank);
     console.log('cycle complete');
@@ -415,7 +417,6 @@ function setGPM(){
             device.postReq(commandValue);
         } else{
             console.log(device.name,' status:', device.feedback.textContent); 
-            return resolve();
         }
         if(loggedStatus < 0){
             return reject(`${device.name} under range`)
