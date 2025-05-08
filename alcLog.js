@@ -188,10 +188,10 @@ let controllerReady;
     rampfansButton.addEventListener('click', rampFans)
     aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append(rampfansButton)
     
-    const bypassDamperButton = document.createElement('button');
-    bypassDamperButton.textContent= 'Run Bypass';
-    bypassDamperButton.addEventListener('click', runBypass)
-    aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassDamperButton)
+    const bypassTestButton = document.createElement('button');
+    bypassTestButton.textContent= 'Start Bypass Timer';
+    bypassTestButton.addEventListener('click', runBypass)
+    aContent.querySelector("#bodyTable > tbody > tr:nth-child(57) > td.left").append(bypassTestButton)
     
     const fanTimerButton = document.createElement('button');
     fanTimerButton.textContent = "Start Fan Timer"
@@ -220,25 +220,21 @@ let controllerReady;
         testDampersButton.style.margin = '0 1.5em';
         testDampersButton.addEventListener('click', ()=>{testFaceAndBypass();});
 
-    const testFillDrainButton = document.createElement('button');
-        testFillDrainButton.textContent = 'Test Fill/Drain & Inputs';
-        testFillDrainButton.style.margin = '0 1.5em';
-        testFillDrainButton.addEventListener('click', ()=>{testFillAndDrain(); testUnitDevices();});
+    const testIOButton = document.createElement('button');
+        testIOButton.textContent = 'Test Fill/Drain & Inputs';
+        testIOButton.style.margin = '0 1.5em';
+        testIOButton.addEventListener('click', ()=>{testFillAndDrain(); testUnitDevices();});
 
     const evapTankButton = document.createElement('button');
         evapTankButton.style.margin = '0 1.5em';
         evapTankButton.textContent = 'Fill Tank';
         evapTankButton.addEventListener('click',()=>{fillTank()});
 
-
-
     if(aContent.querySelector('#scrollContent > div').children.length < 2){
         aContent.querySelector("#scrollContent > div").append(testDampersButton);
-        aContent.querySelector("#scrollContent > div").append(testFillDrainButton);
-        // aContent.querySelector("#scrollContent > div").append(testUnitDevicesButton);
+        aContent.querySelector("#scrollContent > div").append(testIOButton);
         aContent.querySelector("#scrollContent > div").append(evapTankButton);
     }
-    
 }
 
 //init commands
