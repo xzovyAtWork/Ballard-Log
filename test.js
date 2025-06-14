@@ -199,21 +199,21 @@ if(saTemp.feedback.textContent == '?'){
     if(confirm('begin download?')){
         invokeManualCommand('download');
         console.log('downloading...')
+        controllerReady = setInterval(()=>{
+            if(saTemp.feedback.textContent !== '?'){
+                console.log('Polling Inputs...');
+                clearInterval(controllerReady);
+                fill.postReq(0);
+                drain.postReq(1);
+                faceDamper.postReq(20);
+                bypassDamper.postReq(100);
+                sump.postReq(0);
+                vfdHOA.postReq(0);
+                vfd.postReq(0);
+            }
+        },1000)
     }
-    controllerReady = setInterval(()=>{
-        if(saTemp.feedback.textContent !== '?'){
-            console.log('Polling Inputs...');
-            clearInterval(controllerReady);
-            fill.postReq(0);
-            drain.postReq(1);
-            faceDamper.postReq(20);
-            bypassDamper.postReq(100);
-            sump.postReq(0);
-            vfdHOA.postReq(0);
-            vfd.postReq(0);
-        }
-    },1000)
-}   
+    }   
  floatObjList = [wol, whl, wll];
  sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
  binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
@@ -446,7 +446,7 @@ function setGPM(){
 
         setTimeout(()=>{
                 let timer = setInterval(()=>{
-                    if(withOutput && (between(device.feedback.textContent, device.command.textContent,2) && !device.checkPrevious())){
+                    if(withOutput && (between(device.feedback.textContent, device.command.textContent, 4.5) && !device.checkPrevious())){
                         clearInterval(timer);
                         setTimeout(()=>{
                             device.getAnalog(5);
