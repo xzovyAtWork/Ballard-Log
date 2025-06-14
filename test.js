@@ -16,16 +16,8 @@ try{
     var aContent, target;
     //devices
     var wol, wll, whl, sf1, sf2,sf3,sf4,sf5,sf6, sump, conductivity, fill, drain, faceDamper, bypassDamper, vfd,vfdHOA, vfdFault, leak1 ,leak2, airflow, bleed, primary, secondary, rh1, rh2, maTemp, saTemp;
+    var startBinaryPoll, startFloatsPoll, startFansPoll
 
-    let logDiv = document.createElement('div');
-    logDiv.style = 'width: 40%; height: 200px; z-index: 1; background-color: white; border-radius: 5px; position: absolute; bottom: 10px; right: 10px; overflow: scroll-y;'
-    function log(text){
-        const div = document.createElement('div');
-        div.classList.add('log-item');
-        div.style.fontSize = 'medium';
-        div.textContent = new Date().toLocaleTimeString() + ': ' + text;
-        // logDiv.appendChild(div);
-    };
     class Device{
         constructor(name,feedbackStatus ,commandStatus = undefined, commandFeedback){
             this.name = name;
@@ -198,17 +190,19 @@ aContent.querySelector("#bodyTable > tbody > tr:nth-child(58) > td.left").append
         aContent.querySelector("#scrollContent > div").append(evapTankButton);
     }
     aContent.querySelector("#bodyTable > tbody > tr:nth-child(59) > td.left").append(fanTimerButton)
-    aContent.querySelector("#bodyTable > tbody > tr:nth-child(56) > td.left").append(gpmButton)
+    // aContent.querySelector("#bodyTable > tbody > tr:nth-child(56) > td.left").append(gpmButton)
 
     aContent.querySelector("#scrollContent > div > span").style.display = 'none'
 
 //init commands
 if(saTemp.feedback.textContent == '?'){
-    invokeManualCommand('download');
-    log('downloading...')
+    if(confirm('begin download?')){
+        invokeManualCommand('download');
+        console.log('downloading...')
+    }
     controllerReady = setInterval(()=>{
         if(saTemp.feedback.textContent !== '?'){
-            log('Polling Inputs...');
+            console.log('Polling Inputs...');
             clearInterval(controllerReady);
             fill.postReq(0);
             drain.postReq(1);
@@ -224,9 +218,25 @@ if(saTemp.feedback.textContent == '?'){
  sensorList = [saTemp, maTemp, rh1, rh2, conductivity]
  binaryDeviceList = [fill, drain, leak1, leak2, primary, secondary, vfdFault, vfdHOA, sump];
  analogDeviceList = [bypassDamper, faceDamper, vfd];
+     startBinaryPoll = setInterval(() => {
+        binaryDeviceList.forEach(e => e.getBinary())
+}, 1000);
+
+startFansPoll = setInterval(() => {
+    [sf1,sf2,sf3,sf4,sf5,sf6].forEach((e) => {
+        e.getBinary();
+    })
+}, 1000);
+
+startFloatsPoll = setInterval(() => {
+    floatObjList.forEach((e) => {
+        e.getBinary();
+
+    })
+}, 1000);
 fetchStatusOnLoad();
 
-}, 4500);
+}, 3000);
 
 
 
@@ -277,24 +287,9 @@ var analogDeviceList = [bypassDamper, faceDamper, vfd];
 
      var evapTankButton = document.createElement('button');
         evapTankButton.style.margin = '0 1.5em';
-        evapTankButton.textContent = 'Fill Tank';
-        evapTankButton.addEventListener('click',()=>{fillTank()});
+        evapTankButton.textContent = 'Rinse Media';
+        evapTankButton.addEventListener('click',()=>{});
 
-    startBinaryPoll = setInterval(() => {
-        binaryDeviceList.forEach(e => e.getBinary())
-}, 1000);
-
-starFansPoll = setInterval(() => {
-    [sf1,sf2,sf3,sf4,sf5,sf6].forEach((e) => {
-        e.getBinary();
-    })
-}, 1000);
-
-startFloatsPoll = setInterval(() => {
-    floatObjList.forEach((e) => {
-        e.getBinary();
-    })
-}, 1000);
 
 
 /* functions */
@@ -341,8 +336,9 @@ function showSensors(){
     }else{
         console.log('Float switches in CORRECT orientation if tank is empty.')
     }
-}
-async function fillTank(){
+} 
+function fillTank(){
+    return new Promise(async (resolve) => {
     console.log('filling tank...')
     fill.postReq(1);
     drain.postReq(1);
@@ -350,6 +346,7 @@ async function fillTank(){
     return new Promise(resolve => {
         return resolve();
     })
+})
 }
 
 function drainTank(){
@@ -358,16 +355,32 @@ function drainTank(){
     bleed.postReq(0);
 }
 
-async function flushTank(){
-    console.log('flushing tank')
-    fill.postReq(0);
-    drain.postReq(0);
-    await watchFloat(wol, ()=>{sump.postReq(0); bleed.postReq(0)})
-    await watchFloat(wll, ()=> {
-        console.log('tank flushed')
+function rinseMedia(){
+    return new Promise (async (resolve) => {
+        if(wol.feedback.textContent !== 'Normal'){
+         await fillTank();   
+        }
+        sump.postReq(1);
+        await mediaTimer(30);
+        await flushTank();
+        console.log('cycle complete')
+        resolve();
     })
-    return new Promise(resolve => {
-        resolve('tank flushed');
+}
+
+function flushTank(){
+    return new Promise(async (resolve) => {
+
+        console.log('flushing tank')
+        fill.postReq(0);
+        drain.postReq(0);
+        await watchFloat(wol, ()=>{sump.postReq(0); bleed.postReq(0)})
+        await watchFloat(wll, ()=> {
+            console.log('tank flushed')
+        })
+        return new Promise(resolve => {
+            resolve('tank flushed');
+        })
     })
 }
 async function wetMedia(){
@@ -378,9 +391,10 @@ async function wetMedia(){
 } 
 
  function mediaTimer(duration){
-    console.log(new Date().toLocaleTimeString(), `rinsing for ${duration} minutes`)
+    console.log(new Date().toLocaleTimeString(), `rinsing for ${duration} minutes`);
+    console.log('Conductivity:', conductivity.feedback.textContent)
     return new Promise(resolve => {
-        setTimeout(()=>{resolve('time elapsed')}, duration * 60000)
+        setTimeout(()=>{resolve('time elapsed');console.log('Conductivity:', conductivity.feedback.textContent) }, duration * 60000)
     })
 }
 
@@ -594,5 +608,4 @@ function watchFloat(float, callback){
             }, 1000)
     })
 }
-console.log(sensorList)
 }catch(err){console.log(err)}
