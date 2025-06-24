@@ -236,7 +236,7 @@ startFloatsPoll = setInterval(() => {
 }, 1000);
 fetchStatusOnLoad();
 
-}, 3000);
+}, 4000);
 
 
 
