@@ -331,7 +331,7 @@ function showSensors(){
     if(floatObjList[1].feedback.textContent =='Alarm'){
         console.log('WHL FLOAT SWITCH UPSIDE DOWN!')
     }
-    if(floatObjList[2].feedback.textContent == 'Low'){
+    if(floatObjList[2].feedback.textContent !== 'Low'){
         console.log('WLL FLOAT SWITCH UPSIDE DOWN!')
     }else{
         console.log('Float switches in CORRECT orientation if tank is empty.')
@@ -356,6 +356,7 @@ function drainTank(){
 }
 
 function rinseMedia(){
+    console.log('cycle started at:', new Date())
     return new Promise (async (resolve) => {
         if(wol.feedback.textContent !== 'Normal'){
          await fillTank();   
