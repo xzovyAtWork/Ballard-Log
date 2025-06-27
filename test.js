@@ -33,7 +33,7 @@ try{
         }
         retrievedValues = [];
         toggle(){
-            if(this.command.textContent == 'Close' || this.command.textContent == 'Off'|| this.command.textContent == 'Disable'){
+            if((this.command.textContent == 'Close' && this.name == 'Fill') || (this.command.textContent == 'Open' && this.name == 'Drain') || this.command.textContent == 'Off'|| this.command.textContent == 'Disable'){
                 this.postReq(1)
             }else {
                 this.postReq(0)
