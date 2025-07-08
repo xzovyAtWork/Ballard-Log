@@ -378,8 +378,6 @@ function flushTank(){
         await watchFloat(wol, ()=>{sump.postReq(0); bleed.postReq(0)})
         await watchFloat(wll, ()=> {
             console.log('tank flushed')
-        })
-        return new Promise(resolve => {
             resolve('tank flushed');
         })
     })
